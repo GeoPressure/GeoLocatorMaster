@@ -1,0 +1,14 @@
+# R / RStudio
+.Rproj.user/
+.Rhistory
+.RData
+.Ruserdata
+
+# OS artifacts
+.DS_Store
+
+# Project data and generated outputs
+data/
+figure/
+figures/
+old/
