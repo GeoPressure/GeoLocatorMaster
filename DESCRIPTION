@@ -1,10 +1,26 @@
-Package: GeoLocatorAggregator
-Title: What the Package Does (One Line, Title Case)
+Package: GeoLocatorMaster
+Title: Build and Maintain the Master GeoLocator Datapackage
 Version: 0.0.0.9000
-Authors@R: 
-    person("First", "Last", , "first.last@example.com", role = c("aut", "cre"))
-Description: What the package does (one paragraph).
-License: MIT + file LICENSE
+Authors@R:
+    person("Raphaël", "Nussbaumer", , "rafnuss@gmail.com", role = c("aut", "cre"))
+Description: Internal project package for downloading, preparing, merging,
+    and maintaining the master GeoLocator datapackage assembled from Zenodo
+    records in the geolocator-dp community.
+License: MIT + file LICENSE.md
 Encoding: UTF-8
+Imports:
+    cli,
+    dplyr,
+    frictionless,
+    GeoLocatoR,
+    glue,
+    httr2,
+    jsonlite,
+    keyring,
+    readxl,
+    stats
+Suggests:
+    ebirdst,
+    pkgload
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.3

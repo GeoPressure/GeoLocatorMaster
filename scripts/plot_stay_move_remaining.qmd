@@ -36,12 +36,14 @@ library(readr)
 find_repo_root <- function(start = getwd()) {
   current <- normalizePath(start, winslash = "/", mustWork = FALSE)
   repeat {
-    if (file.exists(file.path(current, "DESCRIPTION"))) {
+    has_r_dir <- dir.exists(file.path(current, "R"))
+    has_readme <- file.exists(file.path(current, "README.md"))
+    if (has_r_dir && has_readme) {
       return(current)
     }
     parent <- dirname(current)
     if (parent == current) {
-      stop("Could not find repo root containing DESCRIPTION.")
+      stop("Could not find repo root containing R/ and README.md.")
     }
     current <- parent
   }

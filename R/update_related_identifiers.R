@@ -27,7 +27,7 @@ update_related_identifiers <- function(
   zenodo <- ZenodoManager$new(
     token = keyring::key_get(service = "ZENODO_TOKEN")
   )
-  z <- zenodo$getDepositionByConceptDOI("10.5281/zenodo.18187092")
+  z <- zenodo$getDepositionByConceptDOI(.master_concept_doi)
   edited <- try(zenodo$editRecord(z$id), silent = TRUE)
   if (!inherits(edited, "try-error") && !is.null(edited$id)) {
     z <- edited

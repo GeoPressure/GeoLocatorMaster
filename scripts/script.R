@@ -1,7 +1,7 @@
 library(GeoLocatoR)
 library(zen4R)
 library(tidyverse)
-# load_all("/Users/rafnuss/Documents/GitHub/GeoLocatoR/")
+library(pkgload)
 load_all()
 
 # Download all datapackage in data/dp
@@ -35,8 +35,8 @@ write_gldp(pkgs_res, "data/master_restricted")
 write_csv(pkgs_res$datapackages, "data/master_restricted/datapackages.csv")
 write_csv(pkgs_res$species, "data/master_restricted/species.csv")
 
-# Update creator on Zenodo
-# https://zenodo.org/uploads/18187093
+# Update creator metadata on the master Zenodo record
+# https://doi.org/10.5281/zenodo.18187092
 update_creators(pkgs, dry_run = FALSE)
 
 # Update related work

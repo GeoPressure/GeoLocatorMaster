@@ -106,9 +106,7 @@ download_community <- function(
 .zenodo_get <- function(url, token = NULL, query = list()) {
   req <- httr2::request(url) |>
     httr2::req_user_agent(
-      glue::glue(
-        "GeoLocatorAggregator/{utils::packageVersion('GeoLocatorAggregator')}"
-      )
+      glue::glue("GeoLocatorMaster")
     ) |>
     httr2::req_headers(Accept = "application/vnd.inveniordm.v1+json") |>
     httr2::req_timeout(30) |>
