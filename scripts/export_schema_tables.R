@@ -41,6 +41,38 @@ collapse_schema_value <- function(value) {
   as.character(value)
 }
 
+schema_caption_intro <- function(schema_file) {
+  if (identical(schema_file, profile_schema_file)) {
+    return("datapackage.json")
+  }
+
+  name <- basename(schema_file) |>
+    tools::file_path_sans_ext() |>
+    str_replace("-table-schema$", "")
+
+  name
+}
+
+clean_description_text <- function(text) {
+  text <- replace_na(as.character(text), "")
+  text <- str_replace_all(text, "\\r\\n|\\r|\\n", " ")
+  text <- str_replace_all(text, "<br\\s*/?>", " ")
+  text <- str_replace_all(
+    text,
+    "<a\\s+[^>]*href=['\"]([^'\"]+)['\"][^>]*>(.*?)</a>",
+    "\\2"
+  )
+  text <- str_replace_all(text, "<span[^>]*>", "")
+  text <- str_replace_all(text, "</span>", "")
+  text <- str_replace_all(text, "<[^>]+>", "")
+  text <- str_replace_all(text, "\\[([^\\]]+)\\]\\(([^)]+)\\)", "\\1")
+  text <- str_replace_all(text, "\\[([^\\]]+)\\]\\[[^\\]]+\\]", "\\1")
+  text <- str_remove_all(text, "\\{:[^}]+\\}")
+  text <- str_remove(text, "\\s+\\*\\*?Example:\\*\\*?.*$")
+  text <- str_remove(text, "\\s+Example:.*$")
+  str_squish(text)
+}
+
 flatten_profile_schema <- function(schema) {
   root <- schema
   if (is.null(root$properties) && !is.null(root$allOf)) {
@@ -139,7 +171,7 @@ for (i in seq_along(all_files)) {
         )
     }
     drop_profile <- names(df) %in%
-      c("required", "title", "enum", "ref", "format", "pattern")
+      c("required", "title", "enum", "ref", "format", "pattern", "example")
     df <- df[, !drop_profile, drop = FALSE]
     entries[[i]] <- list(
       file = schema_file,
@@ -289,6 +321,8 @@ if (FALSE) {
 
 
 code_props <- fp_text(font.family = "Courier New")
+caption_props <- fp_text(bold = TRUE)
+hidden_props <- fp_text(color = "white", font.size = 1)
 
 format_cell <- function(text) {
   text <- replace_na(as.character(text), "")
@@ -302,6 +336,7 @@ format_cell <- function(text) {
   text <- str_replace_all(text, "<span[^>]*>", "")
   text <- str_replace_all(text, "</span>", "")
   text <- str_replace_all(text, "<[^>]+>", "")
+  text <- str_remove_all(text, "\\{:[^}]+\\}")
   text <- str_remove_all(text, "Same as\\s+https?://\\S+")
   text <- str_replace_all(text, "\\s+-\\s+", "\n• ")
   if (text == "") {
@@ -351,52 +386,30 @@ format_cell <- function(text) {
   do.call(as_paragraph, chunks)
 }
 
-format_caption_chunks <- function(text) {
-  text <- replace_na(as.character(text), "")
-  text <- str_replace_all(text, "\\r\\n|\\r|\\n", " ")
-  text <- str_replace_all(text, "<br\\s*/?>", " ")
-  text <- str_replace_all(text, "<span[^>]*>", "")
-  text <- str_replace_all(text, "</span>", "")
-  text <- str_replace_all(text, "<[^>]+>", "")
-  text <- str_remove_all(text, "\\{:[^}]*\\}")
-  text <- str_squish(text)
-
-  if (text == "") {
-    return(list(ftext("")))
-  }
-
-  chunks <- list()
-  while (nchar(text) > 0) {
-    link_loc <- str_locate(text, "\\[[^\\]]+\\]\\([^\\)]+\\)")
-    link_start <- ifelse(is.na(link_loc[1]), Inf, link_loc[1])
-
-    if (is.infinite(link_start)) {
-      chunks <- c(chunks, list(ftext(text)))
-      break
-    }
-
-    if (link_start > 1) {
-      chunks <- c(chunks, list(ftext(substr(text, 1, link_start - 1))))
-      text <- substr(text, link_start, nchar(text))
-    }
-
-    match <- str_match(text, "^\\[([^\\]]+)\\]\\(([^)]+)\\)")
-    if (!is.na(match[1, 1])) {
-      chunks <- c(
-        chunks,
-        list(hyperlink_ftext(match[1, 2], href = match[1, 3]))
-      )
-      text <- substr(text, nchar(match[1, 1]) + 1, nchar(text))
-    } else {
-      chunks <- c(chunks, list(ftext(substr(text, 1, 1))))
-      text <- substr(text, 2, nchar(text))
-    }
-  }
-
-  chunks
+body_add_hidden_field_paragraph <- function(doc, field, pos = "after") {
+  paragraph <- fpar(
+    run_word_field(field, prop = hidden_props),
+    fp_p = fp_par(word_style = "Normal")
+  )
+  xml <- to_wml(paragraph, add_ns = TRUE)
+  xml <- gsub(
+    '<w:color w:val="FFFFFF"/>',
+    '<w:color w:val="FFFFFF"/><w:vanish/>',
+    xml,
+    fixed = TRUE
+  )
+  body_add_xml(doc, str = xml, pos = pos)
 }
 
 doc <- read_docx()
+doc <- body_add_par(doc, "GeoLocator Schema Tables", style = "heading 1")
+doc <- body_add_par(doc, "List of Tables", style = "heading 1")
+doc <- body_add_fpar(
+  doc,
+  fpar(run_word_field('TOC \\h \\z \\f C')),
+  style = "Normal"
+)
+doc <- body_add_break(doc)
 
 for (idx in seq_along(entries)) {
   entry <- entries[[idx]]
@@ -416,7 +429,6 @@ for (idx in seq_along(entries)) {
   }
 
   description <- replace_na(entry$description, "")
-  description <- str_replace_all(description, "\\r\\n|\\r|\\n", " ")
   if (is.null(description) || description == "") {
     description <- basename(entry$file) |>
       tools::file_path_sans_ext() |>
@@ -425,10 +437,17 @@ for (idx in seq_along(entries)) {
       str_replace_all("-", " ") |>
       str_to_sentence()
   }
-
-  caption_prefix <- paste0("Table ", idx, ". ")
-  caption_chunks <- format_caption_chunks(description)
-  caption_para <- do.call(fpar, c(list(ftext(caption_prefix)), caption_chunks))
+  caption_label <- schema_caption_intro(entry$file)
+  description_text <- clean_description_text(description)
+  tc_label <- paste0("Table ", idx, ": ", caption_label)
+  tc_field <- paste0('TC "', tc_label, '" ', "\\", 'f C')
+  caption_para <- fpar(
+    ftext("Table ", prop = caption_props),
+    run_word_field("SEQ tab \\* Arabic", prop = caption_props),
+    ftext(paste0(": ", caption_label, ". "), prop = caption_props),
+    ftext(description_text),
+    fp_p = fp_par(word_style = "Normal")
+  )
 
   ft <- flextable(df)
   if (nrow(df) > 0 && ncol(df) > 0) {
@@ -454,7 +473,7 @@ for (idx in seq_along(entries)) {
   page_width <- 6.5
   ft <- set_table_properties(ft, layout = "fixed")
   if ("description" %in% names(df)) {
-    desc_width <- min(3.5, page_width * 0.6)
+    desc_width <- min(4.2, page_width * 0.7)
     other_cols <- setdiff(names(df), "description")
     other_width <- (page_width - desc_width) / max(1, length(other_cols))
     ft <- ft |>
@@ -464,11 +483,12 @@ for (idx in seq_along(entries)) {
     ft <- width(ft, j = names(df), width = page_width / max(1, ncol(df)))
   }
 
+  if (idx > 1) {
+    doc <- body_add_break(doc)
+  }
+  doc <- body_add_hidden_field_paragraph(doc, tc_field)
   doc <- body_add_fpar(doc, caption_para, style = "Normal")
   doc <- body_add_flextable(doc, ft)
-  if (idx < length(entries)) {
-    doc <- body_add_par(doc, "", style = "Normal")
-  }
 }
 
 print(doc, target = docx_path)
