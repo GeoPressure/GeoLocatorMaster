@@ -1,5 +1,4 @@
 library(GeoLocatoR)
-library(zen4R)
 library(tidyverse)
 library(pkgload)
 load_all()
@@ -8,32 +7,38 @@ load_all()
 download_community(include_embargo = TRUE)
 
 # Combine all datapacakge from data/dp
-pkg_list <- read_dp_packages(include_embargo = FALSE)
-pkg_list <- prepare_dp_packages(pkg_list)
-pkgs <- GeoLocatoR::merge_gldp(pkg_list)
-pkgs <- enhanced_pkgs(pkgs)
+pkg_list <- read_dp_packages(include_embargo = FALSE, force_read = FALSE)
+pkgs <- merge_without_measurements(pkg_list)
+rm(pkg_list)
+gc(full = TRUE)
 
 # Get Master DP Zendo record
 
+unlink(file.path("data", "master", "measurements.csv"))
 write_gldp(pkgs, "data/master")
 # We don't export those because they don't have the restricted/embargoed records (See below)
 # write_csv(pkgs$datapackages, "data/master/datapackages.csv")
 # write_csv(pkgs$species, "data/master/species.csv")
 
 # With embargoed record
-pkg_list_res <- read_dp_packages(include_embargo = TRUE)
-pkg_list_res <- prepare_dp_packages(pkg_list_res)
-pkgs_res <- GeoLocatoR::merge_gldp(pkg_list_res)
-pkgs_res <- enhanced_pkgs(pkgs_res)
+pkg_list_res <- read_dp_packages(include_embargo = TRUE, force_read = FALSE)
+pkgs_res <- merge_without_measurements(pkg_list_res)
+rm(pkg_list_res)
+gc(full = TRUE)
 
 # Export all datapacakge metadata
-write_csv(pkgs_res$datapackages, "data/master/datapackages.csv")
-write_csv(pkgs_res$species, "data/master/species.csv")
+write_csv(pkgs_res$datapackages, "data/master/datapackages.csv", na = "")
+write_csv(pkgs_res$species, "data/master/species.csv", na = "")
 
 # For personal use only!!
+unlink(file.path("data", "master_restricted", "measurements.csv"))
 write_gldp(pkgs_res, "data/master_restricted")
-write_csv(pkgs_res$datapackages, "data/master_restricted/datapackages.csv")
-write_csv(pkgs_res$species, "data/master_restricted/species.csv")
+write_csv(
+    pkgs_res$datapackages,
+    "data/master_restricted/datapackages.csv",
+    na = ""
+)
+write_csv(pkgs_res$species, "data/master_restricted/species.csv", na = "")
 
 # Update creator metadata on the master Zenodo record
 # https://doi.org/10.5281/zenodo.18187092
@@ -50,7 +55,7 @@ files <- list.files(
     all.files = TRUE,
     no.. = TRUE
 )
-files <- files[basename(files) != "measurement.csv"]
+files <- files[basename(files) != "measurements.csv"]
 
 file.copy(
     from = files,
@@ -58,3 +63,37 @@ file.copy(
     recursive = TRUE,
     overwrite = TRUE
 )
+
+
+# Export for GBIF
+
+pkgs <- read_gldp("data/master/datapackage.json")
+
+load_all("/Users/rafnuss/Documents/GitHub/GeoLocatoR/")
+pkgs$title <- "Master GeoLocator Data Package"
+gldp_to_dwc(pkgs, "data/dwc")
+
+
+tags <- tags(pkgs)
+scientific_name_ids <- tags |>
+    dplyr::distinct(.data$scientific_name)
+if (requireNamespace("movepub", quietly = TRUE)) {
+    scientific_name_ids <- scientific_name_ids |>
+        dplyr::mutate(
+            scientificNameID = purrr::map_chr(
+                .data$scientific_name,
+                \(scientific_name) {
+                    aphia <- movepub::get_aphia_id(scientific_name)
+                    aphia_lsid <- aphia$aphia_lsid[!is.na(aphia$aphia_lsid)]
+                    if (length(aphia_lsid) == 0) {
+                        NA_character_
+                    } else {
+                        aphia_lsid[[1]]
+                    }
+                }
+            )
+        )
+} else {
+    scientific_name_ids <- scientific_name_ids |>
+        dplyr::mutate(scientificNameID = NA_character_)
+}

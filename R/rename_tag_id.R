@@ -10,7 +10,11 @@
 #' @return Updated datapackage object.
 #' @export
 rename_tag_id <- function(pkg, old_tag_id, new_tag_id) {
-  resources <- frictionless::resources(pkg)
+  supported_resources <- c(
+    "tags", "observations", "measurements", "staps",
+    "twilights", "paths", "edges", "pressurepaths"
+  )
+  resources <- intersect(frictionless::resources(pkg), supported_resources)
 
   for (resource_name in resources) {
     resource_data <- frictionless::read_resource(pkg, resource_name = resource_name)
@@ -35,4 +39,3 @@ rename_tag_id <- function(pkg, old_tag_id, new_tag_id) {
 
   pkg
 }
-

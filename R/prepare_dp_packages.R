@@ -22,6 +22,10 @@ prepare_dp_packages <- function(
 
   prepared_pkgs <- vector("list", length(pkgs))
   seen_tag_ids <- character(0)
+  supported_resources <- c(
+    "tags", "observations", "measurements", "staps",
+    "twilights", "paths", "edges", "pressurepaths"
+  )
 
   for (i in seq_along(pkgs)) {
     pkg <- pkgs[[i]]
@@ -33,6 +37,11 @@ prepare_dp_packages <- function(
     if (!keep_measurements) {
       pkg <- .drop_measurements_for_merge(pkg)
     }
+
+    pkg$resources <- Filter(
+      function(resource) (resource$name %||% "") %in% supported_resources,
+      pkg$resources %||% list()
+    )
 
     current_tag_ids <- unique(GeoLocatoR::tags(pkg)$tag_id)
     current_tag_ids <- current_tag_ids[

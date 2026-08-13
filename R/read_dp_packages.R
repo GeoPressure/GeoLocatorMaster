@@ -1,13 +1,16 @@
 #' Read local GeoLocator datapackages into a list
 #'
 #' @inheritParams aggregate_dp
+#' @param force_read Passed to [GeoLocatoR::read_gldp()]. When `FALSE`, resource
+#'   data are not retained in the returned package objects.
 #'
 #' @return A named list of GeoLocatoR datapackage objects.
 #' @export
 read_dp_packages <- function(
   dp_dir = file.path("data", "dp"),
   include_embargo = FALSE,
-  quiet = FALSE
+  quiet = FALSE,
+  force_read = TRUE
 ) {
   dp_names <- list.files(
     dp_dir,
@@ -29,7 +32,7 @@ read_dp_packages <- function(
       )
     }
 
-    pkg <- GeoLocatoR::read_gldp(dp_json)
+    pkg <- GeoLocatoR::read_gldp(dp_json, force_read = force_read)
     if (!include_embargo && is_pkg_embargoed(pkg)) {
       cli::cli_warn(
         "Datapackage {.field {record_label}} is under embargo. Skipping..."

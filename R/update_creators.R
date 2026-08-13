@@ -111,17 +111,7 @@ apply_creators_update <- function(creators, dry_run = TRUE) {
     return(invisible(merged))
   }
 
-  zenodo <- ZenodoManager$new(
-    token = keyring::key_get(service = "ZENODO_TOKEN")
-  )
-  z <- zenodo$getDepositionByConceptDOI(.master_concept_doi)
-  edited <- try(zenodo$editRecord(z$id), silent = TRUE)
-  if (!inherits(edited, "try-error") && !is.null(edited$id)) {
-    z <- edited
-  }
-
-  z$metadata$creators <- merged$creators
-  zenodo$depositRecord(z, reserveDOI = FALSE, publish = FALSE)
+  .update_master_record_metadata(list(creators = merged$creators))
 
   invisible(merged)
 }

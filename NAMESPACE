@@ -3,6 +3,7 @@
 export(download_community)
 export(download_record)
 export(enhanced_pkgs)
+export(merge_without_measurements)
 export(prepare_dp_packages)
 export(read_dp_packages)
 export(rename_tag_id)

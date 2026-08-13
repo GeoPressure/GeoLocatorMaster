@@ -24,17 +24,7 @@ update_related_identifiers <- function(
     return(invisible(list(related = related)))
   }
 
-  zenodo <- ZenodoManager$new(
-    token = keyring::key_get(service = "ZENODO_TOKEN")
-  )
-  z <- zenodo$getDepositionByConceptDOI(.master_concept_doi)
-  edited <- try(zenodo$editRecord(z$id), silent = TRUE)
-  if (!inherits(edited, "try-error") && !is.null(edited$id)) {
-    z <- edited
-  }
-
-  z$metadata$related_identifiers <- related
-  zenodo$depositRecord(z, reserveDOI = FALSE, publish = FALSE)
+  .update_master_record_metadata(list(related_identifiers = related))
 
   invisible(list(related = related))
 }
