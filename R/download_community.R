@@ -10,7 +10,7 @@
 #' @param overwrite Should existing records be overwritten?
 #' @param quiet When `FALSE`, progress updates are emitted with `cli`.
 #' @param include_embargo When `FALSE`, embargoed records are skipped.
-#' @param include_measurements When `TRUE`, keep `measurements*` resources.
+#' @param include_measurements When `TRUE`, download measurements files to the cache.
 #'
 #' @return Invisibly returns the list of Zenodo records returned by the API.
 #' @seealso [download_record()]
@@ -40,6 +40,10 @@ download_community <- function(
     community = community,
     token = token
   )
+  records <- Filter(function(record) .record_concept_id_from_zenodo(record) !=
+                      sub("^.*zenodo\\.", "", .master_concept_doi), records)
+  jsonlite::write_json(records, file.path(dp_dir, "community_records.json"),
+                       auto_unbox = TRUE, pretty = TRUE, null = "null")
 
   if (length(records) == 0) {
     cli::cli_warn(
@@ -105,12 +109,13 @@ download_community <- function(
 #' @noRd
 .zenodo_get <- function(url, token = NULL, query = list()) {
   req <- httr2::request(url) |>
+    httr2::req_options(ipresolve = 1L, connecttimeout = 20L) |>
     httr2::req_user_agent(
       glue::glue("GeoLocatorMaster")
     ) |>
     httr2::req_headers(Accept = "application/vnd.inveniordm.v1+json") |>
-    httr2::req_timeout(30) |>
-    httr2::req_retry(max_tries = 2)
+    httr2::req_timeout(120) |>
+    httr2::req_retry(max_tries = 3, retry_on_failure = TRUE)
 
   if (length(query) > 0) {
     req <- do.call(httr2::req_url_query, c(list(.req = req), query))

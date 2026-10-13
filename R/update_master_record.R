@@ -31,6 +31,14 @@
 
   draft <- httr2::resp_body_json(draft_response, simplifyVector = FALSE)
   draft$metadata <- utils::modifyList(draft$metadata, metadata)
+  # Registered licences accept only an ID, not the returned display fields.
+  for (i in seq_along(draft$metadata$rights)) {
+    if (!is.null(draft$metadata$rights[[i]]$id)) {
+      draft$metadata$rights[[i]] <- list(id = draft$metadata$rights[[i]]$id)
+    } else {
+      draft$metadata$rights[[i]]$icon <- NULL
+    }
+  }
 
   httr2::request(draft_url) |>
     httr2::req_auth_bearer_token(token) |>

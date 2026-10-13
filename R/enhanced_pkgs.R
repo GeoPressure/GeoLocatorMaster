@@ -14,7 +14,7 @@ enhanced_pkgs <- function(pkgs) {
 }
 
 .normalize_tag_manufacturer <- function(pkgs) {
-  t <- tags(pkgs)
+  t <- GeoLocatoR::tags(pkgs)
 
   replacements <- list(
     "Migrate Technology Limited" = c(
@@ -39,7 +39,7 @@ enhanced_pkgs <- function(pkgs) {
     unname(lookup[t$manufacturer]),
     t$manufacturer
   )
-  tags(pkgs) <- t
+  GeoLocatoR::tags(pkgs) <- t
   pkgs
 }
 
@@ -74,7 +74,7 @@ enhanced_pkgs <- function(pkgs) {
     )
   }
 
-  scientific_names <- tags(pkgs)$scientific_name
+  scientific_names <- GeoLocatoR::tags(pkgs)$scientific_name
   scientific_names <- normalize_species_name(scientific_names)
   scientific_names <- scientific_names[nzchar(scientific_names)]
   scientific_names <- unique(scientific_names)

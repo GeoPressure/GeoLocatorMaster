@@ -17,7 +17,7 @@ rename_tag_id <- function(pkg, old_tag_id, new_tag_id) {
   resources <- intersect(frictionless::resources(pkg), supported_resources)
 
   for (resource_name in resources) {
-    resource_data <- frictionless::read_resource(pkg, resource_name = resource_name)
+    resource_data <- getExportedValue("GeoLocatoR", resource_name)(pkg)
     if (!"tag_id" %in% names(resource_data)) {
       next
     }

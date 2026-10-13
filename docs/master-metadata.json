@@ -1,0 +1,14 @@
+{
+  "title": "Master GeoLocator Data Package",
+  "conceptid": "https://doi.org/10.5281/zenodo.18187092",
+  "codeRepository": "https://github.com/GeoPressure/GeoLocatorMaster",
+  "licenses": [
+    {
+      "name": "cc-by-4.0",
+      "title": "Creative Commons Attribution 4.0 International",
+      "path": "https://creativecommons.org/licenses/by/4.0/legalcode"
+    }
+  ],
+  "record_type": "dataset",
+  "description": "The Master GeoLocator Data Package compiles curated, open-access project-level bird geolocator datasets in a shared structure, preserving source identifiers and attribution. It contains device and field-observation tables and available movement-analysis outputs. Source and species catalogues also describe contributing embargoed projects; their data are excluded from the public resource tables."
+}

@@ -1,3 +1,12 @@
+#' Update the Master Zenodo creators from package contributors
+#'
+#' @param pkgs A Master package containing contributors.
+#' @param dry_run If TRUE, return proposed creators without updating Zenodo.
+#' @return The merged creators and their identity keys, invisibly.
+#' @details Preserves accents, corrects seven known name-only source entries,
+#'   and merges unambiguous duplicates while retaining ORCIDs and affiliations.
+#'   With dry_run = FALSE, updates the Master draft without publishing it.
+#' @export
 update_creators <- function(pkgs, dry_run = TRUE) {
   creators <- get_creators_from_pkgs(pkgs)
   apply_creators_update(creators = creators, dry_run = dry_run)
@@ -57,6 +66,23 @@ contributor_to_zenodo_creator <- function(contributor) {
   given_name <- get_scalar(first_non_null(contributor$givenName, contributor$given_name))
   family_name <- get_scalar(first_non_null(contributor$familyName, contributor$family_name))
   name <- get_scalar(first_non_null(contributor$title, contributor$name))
+
+  # These source creators contain only a full name; preserve compound surnames.
+  if (family_name == "") {
+    corrected <- switch(name,
+      "Fanny Rey" = c("Fanny", "Rey"),
+      "Fr\u00e9d\u00e9ric Jiguet" = c("Fr\u00e9d\u00e9ric", "Jiguet"),
+      "Paul Doniol-Valcroze" = c("Paul", "Doniol-Valcroze"),
+      "Pierrick Bocher" = c("Pierrick", "Bocher"),
+      "Rose Delacroix" = c("Rose", "Delacroix"),
+      "Sophie de Grissac" = c("Sophie", "de Grissac"),
+      "Yannig Coulomb" = c("Yannig", "Coulomb"))
+    if (!is.null(corrected)) {
+      given_name <- corrected[1]
+      family_name <- corrected[2]
+      name <- paste(family_name, given_name, sep = ", ")
+    }
+  }
 
   affiliations <- split_affiliations(contributor$organization)
   if (name == "") {
@@ -127,11 +153,22 @@ merge_creators <- function(creators) {
     }
 
     idx <- match(key, keys)
+    # Match an ORCID-less entry by name only when its identity is unambiguous.
+    if (is.na(idx) && length(merged)) {
+      same_name <- which(vapply(merged, function(x)
+        normalize_title(get_creator_name(x)) == normalize_title(get_creator_name(creator)), logical(1)))
+      orcids <- vapply(merged[same_name], creator_orcid, character(1))
+      incoming_orcid <- creator_orcid(creator)
+      if (length(same_name) == 1 && (orcids == "" || incoming_orcid == "" || orcids == incoming_orcid)) {
+        idx <- same_name
+      }
+    }
     if (is.na(idx)) {
       merged[[length(merged) + 1]] <- creator
       keys <- c(keys, key)
     } else {
       merged[[idx]] <- merge_creator_pair(merged[[idx]], creator)
+      keys[idx] <- creator_key(merged[[idx]])
     }
   }
 

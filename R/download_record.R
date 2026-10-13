@@ -1,9 +1,9 @@
 #' Download a single GeoLocator datapackage record from Zenodo
 #'
-#' Downloads one record from Zenodo using [GeoLocatoR::read_zenodo()] and writes
-#' it to disk using [GeoLocatoR::write_gldp()]. The record folder is named
-#' `<concept_id>_<record_id>` and includes both `datapackage.json` resources and
-#' `zenodo_metadata.json`.
+#' Downloads missing files directly to disk without materialising measurement
+#' tables in R. Existing files are reused unless overwrite is requested. Source
+#' metadata and access status are refreshed even when files are cached.
+#' The record folder is named `<concept_id>_<record_id>`.
 #'
 #' @param rec Zenodo record id/DOI/URL or a Zenodo record object (list) returned
 #'   by the API.
@@ -14,8 +14,7 @@
 #'   resolution follows GeoLocatoR defaults (`ZENODO_TOKEN`/`ZENODO_PAT` and
 #'   corresponding keyring entries).
 #' @param include_embargo When `FALSE`, embargoed records are skipped.
-#' @param include_measurements When `FALSE`, resources named
-#'   `measurements*` are removed before writing.
+#' @param include_measurements When `FALSE`, measurements files are not downloaded.
 #'
 #' @return Invisibly returns the output directory of the downloaded record.
 #' @export
@@ -48,51 +47,36 @@ download_record <- function(
   record_dir <- file.path(dp_dir, record_label)
   dir.create(record_dir, recursive = TRUE, showWarnings = FALSE)
 
-  if (!overwrite && file.exists(file.path(record_dir, "datapackage.json"))) {
-    if (!quiet) {
-      cli::cli_progress_step("Skipping existing record {.field {record_label}}")
+  # Cache files directly on disk: read_zenodo() materialises every measurement.
+  # Existing version folders are reused; metadata/access status are refreshed.
+  for (file in record$files$entries) {
+    name <- file$key %||% file$filename
+    if (!include_measurements && grepl("^measurements", name)) next
+    destination <- file.path(record_dir, name)
+    if (!overwrite && (file.exists(destination) ||
+        (grepl("\\.gz$", name) && file.exists(sub("\\.gz$", "", destination))))) next
+    if (!quiet) cli::cli_inform("Downloading {record_label}/{name}")
+    url <- file$links$content %||% glue::glue("https://zenodo.org/api/records/{record_id}/files/{utils::URLencode(name, reserved = TRUE)}/content")
+    request <- httr2::request(url) |>
+      httr2::req_timeout(1800) |>
+      httr2::req_retry(max_tries = 3)
+    if (!is.null(token)) request <- httr2::req_auth_bearer_token(request, token)
+    httr2::req_perform(request, path = paste0(destination, ".part"))
+    checksum <- sub("^md5:", "", file$checksum)
+    if (length(checksum) && unname(tools::md5sum(paste0(destination, ".part"))) != checksum) {
+      cli::cli_abort("Checksum mismatch for {record_label}/{name}.")
     }
-    return(invisible(record_dir))
+    file.rename(paste0(destination, ".part"), destination)
   }
 
-  if (!quiet) {
-    cli::cli_progress_step(
-      msg = "Reading Zenodo record {.field {record_label}}...",
-      msg_done = "Read Zenodo record {.field {record_label}}."
-    )
+  jsonlite::write_json(.record_metadata_for_disk(record),
+    file.path(record_dir, "zenodo_metadata.json"), pretty = TRUE,
+    auto_unbox = TRUE, null = "null", na = "null")
+  jsonlite::write_json(record, file.path(record_dir, "zenodo_record.json"),
+    pretty = TRUE, auto_unbox = TRUE, null = "null", na = "null")
+  if (!file.exists(file.path(record_dir, "datapackage.json"))) {
+    cli::cli_abort("No cached or downloadable datapackage.json for {record_label}.")
   }
-  pkg <- .read_zenodo_gldp(record_id = record_id, token = token)
-
-  if (!include_measurements) {
-    pkg <- .drop_measurements_resources(pkg)
-  }
-
-  if (!quiet) {
-    cli::cli_progress_step(
-      msg = "Writing files for {.field {record_label}}...",
-      msg_done = "Wrote files for {.field {record_label}}."
-    )
-  }
-  GeoLocatoR::write_gldp(pkg = pkg, directory = record_dir)
-
-  metadata <- .record_metadata_for_disk(record)
-  jsonlite::write_json(
-    metadata,
-    path = file.path(record_dir, "zenodo_metadata.json"),
-    pretty = TRUE,
-    auto_unbox = TRUE,
-    null = "null",
-    na = "null"
-  )
-  jsonlite::write_json(
-    record,
-    path = file.path(record_dir, "zenodo_record.json"),
-    pretty = TRUE,
-    auto_unbox = TRUE,
-    null = "null",
-    na = "null"
-  )
-
   invisible(record_dir)
 }
 

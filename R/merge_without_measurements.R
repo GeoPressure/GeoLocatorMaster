@@ -4,7 +4,7 @@
 #' `measurements*` resources from the merged datapackage. Packages are prepared
 #' with [prepare_dp_packages()] and the merged result is enhanced with
 #' [enhanced_pkgs()]. The summaries are also stored in
-#' `measurementMetadata`, where they survive a later [GeoLocatoR::read_gldp()]
+#' `measurementMetadata`, where they survive a later `GeoLocatoR::read_gldp()`
 #' call that clears standard measurement-derived fields when no measurement
 #' resource is present.
 #'

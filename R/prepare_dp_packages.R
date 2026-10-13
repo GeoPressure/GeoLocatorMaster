@@ -1,4 +1,4 @@
-#' Combine a list of GeoLocator datapackages
+#' Prepare source packages for aggregation
 #'
 #' @param pkgs A list of GeoLocatoR datapackage objects, usually from
 #'   [read_dp_packages()].
@@ -6,8 +6,7 @@
 #' @param keep_measurements When `FALSE`, resources named `measurements*` are
 #'   removed from each datapackage before merging.
 #'
-#' @return A merged GeoLocatoR datapackage object, or `NULL` when `pkgs` is
-#'   empty.
+#' @return A list of packages with standard resources and unique tag IDs.
 #' @export
 prepare_dp_packages <- function(
   pkgs,
@@ -52,12 +51,12 @@ prepare_dp_packages <- function(
     if (length(duplicated_tag_ids) > 0) {
       cli::cli_warn(c(
         "Duplicate {.field tag_id} detected in package {.field {record_label}}.",
-        ">" = "Renaming tag_id with suffix {.field _{i}}: {duplicated_tag_ids}"
+        ">" = "Renaming tag_id with its source concept ID: {duplicated_tag_ids}"
       ))
       pkg <- rename_conflicting_tag_ids(
         pkg = pkg,
         tag_ids = duplicated_tag_ids,
-        suffix = i
+        suffix = sub("_.*$", "", record_label)
       )
       current_tag_ids <- unique(GeoLocatoR::tags(pkg)$tag_id)
       current_tag_ids <- current_tag_ids[

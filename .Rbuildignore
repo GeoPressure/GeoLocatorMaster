@@ -1,1 +1,10 @@
 ^LICENSE\.md$
+^data$
+^figures?$
+^old$
+^output$
+^reports$
+^scripts$
+^docs$
+^examples$
+^tests/check_release\.R$

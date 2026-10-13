@@ -6,8 +6,10 @@ Authors@R:
 Description: Internal project package for downloading, preparing, merging,
     and maintaining the master GeoLocator datapackage assembled from Zenodo
     records in the geolocator-dp community.
-License: MIT + file LICENSE.md
+License: MIT + file LICENSE
 Encoding: UTF-8
+Depends:
+    R (>= 4.4.0)
 Imports:
     cli,
     dplyr,
@@ -17,10 +19,15 @@ Imports:
     httr2,
     jsonlite,
     keyring,
+    readr,
     readxl,
-    stats
+    stats,
+    tibble,
+    tidyr
 Suggests:
     ebirdst,
+    arrow,
+    ggplot2,
     pkgload
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.3
+Config/roxygen2/version: 8.0.0
