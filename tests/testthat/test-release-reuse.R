@@ -111,12 +111,16 @@ test_that("writing and reopening a selected bird preserves its derived tables", 
   expect_equal(reopened$datapackages, selected$datapackages)
 })
 
-test_that("the documented reuse script runs against the exact release under test", {
+test_that("the Quarto reuse example runs against the exact release under test", {
   skip_without_release()
   skip_if_not_installed("ggplot2")
-  script <- parse(testthat::test_path("..", "..", "examples", "reuse_master.R"))
+  skip_if_not_installed("knitr")
+  code <- tempfile(fileext = ".R")
+  on.exit(unlink(code))
+  knitr::purl(testthat::test_path("..", "..", "examples", "reuse_master.qmd"), output = code, quiet = TRUE)
+  script <- parse(code)
   example <- new.env(parent = environment())
-  # Substitute only the download: execute every analytical expression unchanged.
+  # Substitute only the read: execute every analytical expression unchanged.
   for (i in seq_along(script)) {
     if (is.call(script[[i]]) && identical(script[[i]][[1]], as.name("<-")) &&
         identical(script[[i]][[2]], as.name("master"))) script[[i]][[3]] <- quote(master_release)

@@ -6,7 +6,7 @@ Build and maintain the [Master GeoLocator Data Package](https://doi.org/10.5281/
 
 Use R 4.4 or later and clone this repository beside a `GeoLocatoR` checkout. The current workflow requires the GeoLocatoR development API, including `read_gldp(drop_measurements = TRUE)`, `gldp_to_dwc()` and `gldp_to_eml()`. It was checked with GeoLocatoR commit `c381e0536a0614ce341726da48ad58a83131c57e` on `dev`; an older installed release may not provide these features.
 
-Install the dependencies listed in [`DESCRIPTION`](DESCRIPTION), including `pkgload` for local development and `ebirdst` for species enrichment. Place the taxonomy workbook at `data/AviList-v2025-11Jun-extended.xlsx`; it is a required local input and is not distributed in this repository. `ggplot2` is needed for the reuse example. Arrow is optional for the separate measurement-storage investigation.
+Install the dependencies listed in [`DESCRIPTION`](DESCRIPTION), including `pkgload` for local development and `ebirdst` for species enrichment. Place the taxonomy workbook at `data/AviList-v2025-11Jun-extended.xlsx`; it is a required local input and is not distributed in this repository. The reuse walkthrough requires Quarto, `knitr`, `rmarkdown` and `ggplot2`. Arrow is optional for the separate measurement-storage investigation.
 
 Public source downloads do not require credentials. Authorised embargoed downloads and draft updates use a Zenodo token resolved by GeoLocatoR from `ZENODO_TOKEN`/`ZENODO_PAT` or the corresponding system-keyring entries. The standalone creator/relationship update helpers currently use the `ZENODO_TOKEN` keyring entry directly.
 
@@ -31,7 +31,7 @@ Source data, credentials and generated exports are not committed to Git. Raw mea
 - [`docs/metadata.md`](docs/metadata.md) and [`docs/master-metadata.json`](docs/master-metadata.json): fixed descriptor fields, DOI/version handling and Zenodo updates.
 - [`docs/gbif.md`](docs/gbif.md): current Darwin Core mapping and publication questions.
 - [`docs/measurements.md`](docs/measurements.md): local storage benchmark and optional measurement inclusion.
-- [`examples/reuse_master.R`](examples/reuse_master.R): filtering, trajectory and altitude summaries, flight speeds and source citations.
+- [`examples/reuse_master.qmd`](examples/reuse_master.qmd): illustrated walkthrough of filtering, trajectory and altitude summaries, flight speeds and source citations. Render with `quarto render examples/reuse_master.qmd --output-dir ../output/reuse-master-vignette`.
 
 Analysis and plotting scripts have moved to the separate GeoLocatorAnalysis project. They are outside this repository's build workflow. Package help is generated from the roxygen comments in `R/` and committed in `man/`.
 

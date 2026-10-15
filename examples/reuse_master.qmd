@@ -1,0 +1,220 @@
+---
+title: "Explore the Master GeoLocator data package"
+format:
+  html:
+    toc: true
+    embed-resources: true
+    code-fold: false
+    code-tools: true
+params:
+  master_dir: "../data/master"
+execute:
+  message: false
+  warning: true
+  fig-width: 8
+  fig-height: 5
+---
+
+This walkthrough uses a local Master build to explore available data, select birds, summarise alternative trajectories, and examine flight speed and altitude. Raw measurements are available from the source project packages and are excluded from the routine Master export to reduce file size and loading time.
+
+Render from the repository root with `quarto render examples/reuse_master.qmd`. Paths below are relative to this document's `examples/` directory. Change `params.master_dir` to use another downloaded release. Use the GeoLocatoR version compatible with that release.
+
+## Read a release
+
+Read the derived tables once. Keep the Master DOI and version with your analysis so the results can be traced to a specific release.
+
+```{r}
+#| label: read-release
+library(GeoLocatoR)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+
+theme_set(theme_minimal(base_size = 12))
+master <- read_gldp(params$master_dir, drop_measurements = TRUE)
+projects <- master$datapackages
+```
+
+This example uses Master **`r master$version`**, DOI **`r master$id`**, containing **`r nrow(tags(master))` tag deployments**. The source catalogue also describes embargoed projects; their restricted data are excluded from the public tables.
+
+```{r}
+#| label: source-catalogue
+knitr::kable(projects |> select(title, access_status, starts_with("numberTags_")),
+  caption = "Source projects and their reported coverage")
+```
+
+## Find the data available for your question
+
+Check the actual Master rows before selecting a species. A deployed tag may have metadata without reconstructed trajectories or altitude estimates. Source catalogue sensor counts describe the original project packages, rather than the rows available in the Master.
+
+```{r}
+#| label: fig-availability
+#| fig-cap: "Deployments with reconstructed positions, flight edges or altitude samples in the public Master. Categories overlap."
+#| fig-height: 8
+availability <- tags(master) |>
+  mutate(has_paths = tag_id %in% paths(master)$tag_id,
+         has_edges = tag_id %in% edges(master)$tag_id,
+         has_altitude = tag_id %in% pressurepaths(master)$tag_id) |>
+  group_by(scientific_name) |>
+  summarise(tags = n(), paths = sum(has_paths), edges = sum(has_edges),
+            altitude = sum(has_altitude), .groups = "drop")
+
+availability |> pivot_longer(c(paths, edges, altitude), names_to = "resource", values_to = "deployments") |>
+  ggplot(aes(deployments, reorder(scientific_name, tags), colour = resource)) +
+  geom_point(position = position_dodge(width = 0.5), size = 2) +
+  labs(x = "Deployments", y = NULL, colour = "Resource") +
+  theme(legend.position = "top")
+```
+
+## Select birds by species, project, sex, time or region
+
+Select tag IDs first, then use `select_gldp()` to retain their rows across all resources. Here we work with Hoopoes (*Upupa epops*).
+
+```{r}
+#| label: select-species
+selected_tags <- tags(master) |> filter(scientific_name == "Upupa epops")
+selected <- select_gldp(master, selected_tags$tag_id)
+knitr::kable(selected_tags |> count(datapackage_id, scientific_name, name = "deployments"))
+```
+
+Other selection criteria can be combined with `intersect()` or `union()` on tag IDs. The date filter below selects stationary periods overlapping 2017. Region membership means at least one estimated stop in the region, rather than the whole trajectory.
+
+```{r}
+#| label: other-filters
+project_tags <- tags(master) |> filter(datapackage_id == selected_tags$datapackage_id[1])
+female_tags <- observations(master) |> filter(sex == "F", !is.na(tag_id)) |> distinct(tag_id)
+period_tags <- staps(master) |> filter(start < as.POSIXct("2018-01-01", tz = "UTC"),
+  end >= as.POSIXct("2017-01-01", tz = "UTC")) |> distinct(tag_id)
+region_tags <- paths(master) |> filter(type == "most_likely",
+  between(lat, 0, 60), between(lon, -20, 40)) |> distinct(tag_id)
+
+knitr::kable(tibble(selection = c("Project", "Female", "Overlaps 2017", "Region"),
+  deployments = c(nrow(project_tags), nrow(female_tags), nrow(period_tags), nrow(region_tags))))
+# regional <- select_gldp(master, intersect(selected_tags$tag_id, region_tags$tag_id))
+```
+
+## Summarise simulated trajectories
+
+Each simulation is a complete alternative trajectory. Sum distances within each bird and simulation before calculating intervals; pooling all simulated edges would count the same migration repeatedly. Totals describe the reconstructed tracking period, which may differ among birds.
+
+```{r}
+#| label: fig-distances
+#| fig-cap: "Total reconstructed distance for each Hoopoe with simulated edges: median and central 95% interval across simulations."
+#| fig-height: 6
+distances <- edges(selected) |> filter(type == "simulation") |>
+  group_by(tag_id, j) |>
+  summarise(total_distance_km = sum(distance), .groups = "drop")
+distance_summary <- distances |> group_by(tag_id) |>
+  summarise(median_km = median(total_distance_km),
+    lower_km = quantile(total_distance_km, 0.025),
+    upper_km = quantile(total_distance_km, 0.975), .groups = "drop") |>
+  left_join(selected_tags |> select(tag_id, datapackage_id, scientific_name), by = "tag_id")
+
+ggplot(distance_summary, aes(median_km, reorder(tag_id, median_km))) +
+  geom_linerange(aes(xmin = lower_km, xmax = upper_km)) +
+  geom_point(colour = "#176B87") +
+  labs(x = "Total reconstructed distance (km)", y = "Tag")
+```
+
+## Join positions to stationary periods
+
+Use `tag_id` and `stap_id` together when joining estimated positions to stationary periods. Keep trajectory type and simulation identity when comparing alternative paths. Here we use only the most likely positions.
+
+```{r}
+#| label: fig-stopovers
+#| fig-cap: "Duration of located stationary periods by estimated latitude in the most likely Hoopoe trajectories."
+stopovers <- paths(selected) |> filter(type == "most_likely") |>
+  left_join(staps(selected), by = c("tag_id", "stap_id"), relationship = "many-to-one") |>
+  mutate(duration_days = as.numeric(difftime(end, start, units = "days")))
+
+ggplot(stopovers |> filter(!is.na(lat)), aes(lat, duration_days)) +
+  geom_point(alpha = 0.6, colour = "#176B87") +
+  labs(x = "Estimated latitude (degrees north)", y = "Stationary period duration (days)")
+```
+
+## Compare flight speed estimates
+
+Edges use kilometres and kilometres per hour. `flight_duration_h` excludes intermediate stationary time. We restrict this example to individual flights (`n == 1`); connections spanning omitted stops need separate interpretation.
+
+Ground speed is the magnitude of the ground velocity vector. Air speed is the magnitude of the ground velocity minus the wind vector, rather than the difference between their magnitudes. Missing wind leaves air speed missing. Distance divided by duration and vector means use different geometry and need not agree.
+
+```{r}
+#| label: fig-flight-speed
+#| fig-cap: "Distance-derived speed versus ground vector speed for individual flights in the most likely Hoopoe trajectories. The line indicates equality; extreme values remain visible for review."
+flights <- edges(selected) |> filter(type == "most_likely", n == 1) |>
+  mutate(duration_h = flight_duration_h,
+    distance_speed_kmh = distance / duration_h,
+    ground_speed_kmh = sqrt(gs_u^2 + gs_v^2),
+    wind_speed_kmh = sqrt(ws_u^2 + ws_v^2),
+    air_speed_kmh = sqrt((gs_u - ws_u)^2 + (gs_v - ws_v)^2))
+
+ggplot(flights, aes(distance_speed_kmh, ground_speed_kmh)) +
+  geom_abline(slope = 1, intercept = 0, colour = "grey60", linetype = "dashed") +
+  geom_point(alpha = 0.65, colour = "#176B87") +
+  coord_equal() +
+  labs(x = "Distance / flight duration (km/h)", y = "Ground vector speed (km/h)")
+```
+
+Review unusual values against their source project rather than silently truncating them. Near-surface ERA5 wind columns in `pressurepaths` use m/s and do not necessarily represent wind at flight altitude.
+
+```{r}
+#| label: inspect-flights
+knitr::kable(flights |> filter(distance_speed_kmh >= 150 | duration_h >= 50) |>
+  select(tag_id, stap_s, stap_t, duration_h, distance, distance_speed_kmh, air_speed_kmh), digits = 1)
+```
+
+## Inspect altitude and sampling coverage
+
+Altitude is in metres above sea level, rather than height above the ground. Respect `discard` labels and retain missingness when describing coverage. Fractional `stap_id` values identify movement segments; do not round them and join them to stationary periods.
+
+```{r}
+#| label: altitude-summary
+pressure <- pressurepaths(selected) |> filter(type == "most_likely")
+coverage <- pressure |> group_by(tag_id) |>
+  summarise(samples = n(), missing_altitude = sum(is.na(altitude)),
+    discarded = sum(label == "discard", na.rm = TRUE), .groups = "drop")
+altitude <- pressure |> filter(is.na(label) | label != "discard", !is.na(altitude)) |>
+  mutate(in_flight = stap_id != floor(stap_id))
+altitude_summary <- altitude |> group_by(tag_id, in_flight) |>
+  summarise(samples = n(), median_m = median(altitude), p95_m = quantile(altitude, 0.95),
+    max_m = max(altitude), .groups = "drop")
+knitr::kable(coverage, caption = "Altitude coverage before excluding discarded or missing estimates")
+```
+
+Choose a few birds for a readable view. All retained estimates are plotted, including unusual altitudes.
+
+```{r}
+#| label: fig-altitude
+#| fig-cap: "Altitude samples for three example Hoopoes, coloured by stationary or movement segment. Discarded and missing altitude estimates are excluded."
+#| fig-height: 6
+example_tags <- altitude |> distinct(tag_id) |> slice_head(n = 3)
+ggplot(altitude |> semi_join(example_tags, by = "tag_id"),
+  aes(datetime, altitude, colour = in_flight)) +
+  geom_point(size = 0.4, alpha = 0.6) +
+  facet_wrap(~tag_id, ncol = 1, scales = "free_x") +
+  scale_colour_manual(values = c("FALSE" = "#176B87", "TRUE" = "#C45B28"),
+    labels = c("Stationary", "Movement")) +
+  labs(x = "Date (UTC)", y = "Altitude above sea level (m)", colour = "Segment") +
+  theme(legend.position = "top")
+```
+
+These summaries weight each sample equally. Differences in sampling intervals and missingness prevent interpreting row proportions as time budgets without further weighting.
+
+```{r}
+#| label: sampling-intervals
+sampling <- pressure |> arrange(tag_id, type, j, datetime) |> group_by(tag_id, type, j) |>
+  mutate(interval_min = as.numeric(difftime(datetime, lag(datetime), units = "mins"))) |>
+  ungroup() |> count(interval_min, sort = TRUE)
+knitr::kable(sampling |> slice_head(n = 10), caption = "Ten most common sampling intervals (minutes)")
+```
+
+## Cite the contributing sources
+
+Keep the Master release reference and cite the project datasets contributing to your analysis. Here the citation list covers all selected Hoopoes. Raw measurements can be retrieved from these project packages when needed.
+
+```{r}
+#| label: source-citations
+citations <- projects |> semi_join(selected_tags, by = "datapackage_id") |>
+  select(datapackage_id, title, licenses, bibliographicCitation)
+knitr::kable(citations)
+```

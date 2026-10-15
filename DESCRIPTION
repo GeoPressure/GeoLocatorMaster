@@ -28,6 +28,8 @@ Suggests:
     ebirdst,
     arrow,
     ggplot2,
+    knitr,
+    rmarkdown,
     pkgload,
     testthat (>= 3.0.0)
 Roxygen: list(markdown = TRUE)
