@@ -19,7 +19,7 @@ Commented calls show how to reuse the inventory offline, refresh a source, build
 ## Inputs and outputs
 
 - `data/dp/`: source packages, Zenodo metadata and small measurement-summary caches. `community_records.json` identifies the current inventory and excludes older cached versions from the routine build.
-- `data/master/`: public resource tables, descriptor, source/species catalogues and a `quality.csv` resource describing unknown metadata and scientific review flags. Catalogues describe all contributing projects, including embargoed projects; public resource tables include only open sources.
+- `data/master/`: public resource tables, descriptor and source/species catalogues. Catalogues describe all contributing projects, including embargoed projects; public resource tables include only open sources.
 - `data/master_restricted/`: optional local output including authorised embargoed data.
 - `data/dwc/occurrence.csv` and `data/dwc/eml.xml`: public Darwin Core and EML review exports. Generation does not publish to GBIF or configure an IPT.
 
@@ -51,7 +51,7 @@ Rscript tests/test_release.R
 # Or: Rscript tests/test_release.R /path/to/downloaded/master output/release-audit
 ```
 
-Checks cover integrity, filtering, joins, simulations, speed, altitude and round trips. Diagnostics go to `output/release-audit/`. Unknown metadata and scientific flags produce warnings in `quality.csv`; structural failures stop the release checks. Source values are retained. Fixture tests also run with `devtools::test()`; release tests require `GLDP_MASTER_DIR` or the runner above.
+Checks cover integrity, filtering, joins, simulations, speed, altitude and round trips. Diagnostics go to `output/release-audit/`. Unknown metadata and scientific flags produce warnings and a local audit `quality.csv`; structural failures stop the release checks. Source values are retained. Fixture tests also run with `devtools::test()`; release tests require `GLDP_MASTER_DIR` or the runner above.
 
 The creator checks make no Zenodo requests. Pipeline checks use temporary fixture files and cover streamed measurements, tag-ID collisions, chunk boundaries and summary-cache reuse. After running the main workflow, run `source("tests/check_release.R")` in the same R session to check the generated release objects and descriptor/CSV consistency.
 

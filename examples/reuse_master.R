@@ -129,24 +129,6 @@ print(ggplot(altitude, aes(datetime, altitude, colour = in_flight)) +
   labs(x = "Date (UTC)", y = "Altitude above sea level (m)", colour = "In flight") +
   theme_minimal())
 
-# Inspect quality flags before choosing analytical exclusions ----------------
-# Scientific screens and unknown field metadata are retained, not silently fixed.
-quality <- frictionless::read_resource(selected, "quality")
-print(quality |> count(resource, field, flag, sort = TRUE))
-# quality$row is the data-row index in the named resource in the full release;
-# retain trajectory keys and datetime when matching flags after a selection.
-print(quality |> filter(resource == "edges") |>
-  select(tag_id, type, j, stap_s, stap_t, field, flag))
-unflagged_flights <- flights |> anti_join(
-  quality |> filter(resource == "edges", flag == "scientific_review"),
-  by = c("tag_id", "type", "j", "stap_s", "stap_t", "n"))
-unflagged_altitude <- altitude |> anti_join(
-  quality |> filter(resource == "pressurepaths", flag == "scientific_review"),
-  by = c("tag_id", "type", "j", "datetime"))
-print(c(all_flights = nrow(flights), unflagged_flights = nrow(unflagged_flights),
-        altitude_samples = nrow(altitude), unflagged_altitude_samples = nrow(unflagged_altitude)))
-# This is an explicit screening choice, not proof that unflagged estimates are accurate.
-
 # Keep the release reference and identify the source datasets to cite --------
 citations <- projects |>
   semi_join(distance_summary, by = "datapackage_id") |>

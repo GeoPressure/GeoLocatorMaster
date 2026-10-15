@@ -3,6 +3,9 @@ test_that("the release identifies its version and public source datasets", {
   expect_true(nzchar(master_descriptor$id))
   expect_true(nzchar(master_descriptor$version))
   expect_identical(master_descriptor$access_status, "open")
+  expect_false("quality" %in% vapply(master_descriptor$resources, `[[`, character(1), "name"))
+  expect_null(master_descriptor$qualityControl)
+  expect_false(file.exists(file.path(master_dir, "quality.csv")))
   expect_s3_class(master_release$datapackages, "data.frame")
   expect_equal(anyDuplicated(master_release$datapackages$datapackage_id), 0L)
   expect_false(anyNA(master_tags[c("tag_id", "datapackage_id", "scientific_name")]))
@@ -44,8 +47,7 @@ test_that("resource keys and declared foreign keys support unambiguous joins", {
       expect_false(anyNA(data[key]), info = resource$name)
       expect_equal(dplyr::n_distinct(data[key]), nrow(data), info = resource$name)
     }
-    # Quality diagnostics may describe an orphan identifier in a source table.
-    if ("tag_id" %in% names(data) && resource$name != "quality") {
+    if ("tag_id" %in% names(data)) {
       expect_true(all(stats::na.omit(data$tag_id) %in% master_tags$tag_id), info = resource$name)
     }
     for (fk in resource$schema$foreignKeys) {

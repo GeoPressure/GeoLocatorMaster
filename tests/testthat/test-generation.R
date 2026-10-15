@@ -77,7 +77,9 @@ test_that("master flight duration excludes pauses at omitted intermediate stops"
   pkg <- GeoLocatoR::add_gldp_resource(pkg, "edges", tibble::tibble(tag_id = "AA", type = "most_likely", j = 1L,
     stap_s = 1, stap_t = 3, start = origin + 3600, end = origin + 90000, n = 2L,
     lat_s = 45, lon_s = 7, lat_t = 46, lon_t = 8, distance = 100, gs_u = 50, gs_v = 0))
-  flagged <- GeoLocatorMaster:::.add_master_quality(pkg)
+  flagged <- GeoLocatorMaster:::.add_master_flight_duration(pkg)
+  expect_false("quality" %in% frictionless::resource_names(flagged))
+  expect_null(flagged$qualityControl)
   expect_equal(GeoLocatoR::edges(flagged)$flight_duration_h, 2)
   expect_equal(as.numeric(difftime(GeoLocatoR::edges(flagged)$end, GeoLocatoR::edges(flagged)$start, units = "hours")), 24)
   expect_identical(GeoLocatoR::edges(flagged)$distance, GeoLocatoR::edges(pkg)$distance)
@@ -95,12 +97,11 @@ test_that("scientific screens preserve flagged values and respect discard labels
   i <- match("pressurepaths", vapply(pkg$resources, `[[`, character(1), "name"))
   pkg$resources[[i]]$data$altitude <- -500
   pkg$resources[[i]]$data$label <- NA_character_
-  flagged <- GeoLocatorMaster:::.add_master_quality(pkg)
-  quality <- frictionless::read_resource(flagged, "quality")
+  quality <- GeoLocatorMaster:::.master_quality(pkg)
   expect_true(any(quality$field == "altitude_m"))
-  expect_identical(GeoLocatoR::pressurepaths(flagged)$altitude, -500)
+  expect_identical(GeoLocatoR::pressurepaths(pkg)$altitude, -500)
   pkg$resources[[i]]$data$label <- "discard"
-  expect_false(any(frictionless::read_resource(GeoLocatorMaster:::.add_master_quality(pkg), "quality")$field == "altitude_m"))
+  expect_false(any(GeoLocatorMaster:::.master_quality(pkg)$field == "altitude_m"))
 })
 
 test_that("five-minute zero-displacement transitions do not trigger a flight-duration warning", {
@@ -113,6 +114,27 @@ test_that("five-minute zero-displacement transitions do not trigger a flight-dur
   pkg <- GeoLocatoR::add_gldp_resource(pkg, "edges", tibble::tibble(tag_id = "AA", type = "most_likely", j = 1L,
     stap_s = 1, stap_t = 2, start = origin + 3600, end = origin + 3900, n = 1L,
     lat_s = 45, lon_s = 7, lat_t = 45, lon_t = 7, distance = 0, gs_u = 0, gs_v = 0))
-  quality <- frictionless::read_resource(GeoLocatorMaster:::.add_master_quality(pkg), "quality")
+  quality <- GeoLocatorMaster:::.master_quality(pkg)
   expect_false(any(quality$field == "flight_duration_h"))
+})
+
+test_that("master exports exclude local quality diagnostics and stale audit files", {
+  directory <- tempfile("master-audit-")
+  on.exit(unlink(directory, recursive = TRUE))
+  pkg <- make_master_source(file.path(directory, "source"), "source")
+  pkg$resources <- append(pkg$resources, list(list(name = "quality")))
+  pkg$qualityControl <- list(scientific_review_flags = 1)
+  output <- file.path(directory, "master")
+  dir.create(output)
+  writeLines("old local audit", file.path(output, "quality.csv"))
+  local_mocked_bindings(.add_species = function(pkg) {
+    pkg$species <- tibble::tibble(scientific_name = "Upupa epops")
+    pkg
+  }, .package = "GeoLocatorMaster")
+  written <- write_master(pkg, tibble::tibble(datapackage_id = "source"), list(pkg), output,
+    "test", "https://doi.org/10.5281/zenodo.101", sources = list(), metadata = list())
+  descriptor <- jsonlite::read_json(file.path(output, "datapackage.json"))
+  expect_false("quality" %in% frictionless::resource_names(written))
+  expect_null(descriptor$qualityControl)
+  expect_false(file.exists(file.path(output, "quality.csv")))
 })

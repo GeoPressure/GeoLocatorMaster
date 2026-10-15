@@ -44,10 +44,11 @@ test_that("incomplete metadata and scientific screens are preserved as explicit 
     jsonlite::write_json(list(id = master_descriptor$id, version = master_descriptor$version,
       directory = master_dir, tested_at = format(Sys.time(), tz = "UTC"),
       GeoLocatoR = as.character(utils::packageVersion("GeoLocatoR")),
-      files = as.list(tools::md5sum(file.path(master_dir, c("datapackage.json", "tags.csv", "staps.csv", "paths.csv", "edges.csv", "pressurepaths.csv", "quality.csv"))))),
+      files = as.list(tools::md5sum(file.path(master_dir, c("datapackage.json", "tags.csv", "staps.csv", "paths.csv", "edges.csv", "pressurepaths.csv"))))),
       file.path(directory, "tested-release.json"), auto_unbox = TRUE, pretty = TRUE)
   }
-  quality <- frictionless::read_resource(master_release, "quality")
+  quality <- master_quality
+  if (nzchar(directory)) readr::write_csv(quality, file.path(directory, "quality.csv"), na = "")
   expect_true(all(quality$resource %in% frictionless::resource_names(master_release)))
   for (name in unique(quality$resource)) {
     flags <- quality |> dplyr::filter(resource == name)
@@ -71,8 +72,6 @@ test_that("incomplete metadata and scientific screens are preserved as explicit 
   }
   expect_equal(metadata_flags |> dplyr::select(resource, row, field) |> dplyr::arrange(resource, row, field),
     dplyr::bind_rows(expected_metadata) |> dplyr::arrange(resource, row, field))
-  expect_equal(nrow(metadata_flags), master_descriptor$qualityControl$incomplete_metadata_flags)
-  expect_equal(sum(quality$flag == "scientific_review"), master_descriptor$qualityControl$scientific_review_flags)
-  if (nrow(metadata_flags)) cli::cli_warn("{nrow(metadata_flags)} missing required metadata values remain unknown in the original sources; see quality.csv and missing-required-fields.csv.")
-  if (any(quality$flag == "scientific_review")) cli::cli_warn("Scientific review flags remain in quality.csv; estimates are preserved. See unusual-flights.csv and unusual-altitude.csv.")
+  if (nrow(metadata_flags)) cli::cli_warn("{nrow(metadata_flags)} missing required metadata values remain unknown in the original sources; see the local audit quality.csv and missing-required-fields.csv.")
+  if (any(quality$flag == "scientific_review")) cli::cli_warn("Scientific review flags remain in the local audit quality.csv; estimates are preserved. See unusual-flights.csv and unusual-altitude.csv.")
 })

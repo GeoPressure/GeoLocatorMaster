@@ -9,6 +9,7 @@ if (nzchar(master_dir)) {
   master_paths <- GeoLocatoR::paths(master_release)
   master_edges <- GeoLocatoR::edges(master_release)
   master_pressure <- GeoLocatoR::pressurepaths(master_release)
+  master_quality <- GeoLocatorMaster:::.master_quality(master_release)
 }
 
 skip_without_release <- function() {

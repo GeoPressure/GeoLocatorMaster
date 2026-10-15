@@ -15,7 +15,9 @@ write_master <- function(pkg, overview, all_sources, directory, version, doi,
                          include_measurements = FALSE, sources,
                          metadata = jsonlite::read_json("docs/master-metadata.json")) {
   pkg <- restore_master_field_types(pkg, sources)
-  pkg <- .add_master_quality(pkg)
+  pkg <- .add_master_flight_duration(pkg)
+  pkg$resources <- Filter(function(r) r$name != "quality", pkg$resources)
+  pkg$qualityControl <- NULL
   for (field in names(metadata)) pkg[[field]] <- metadata[[field]]
   pkg$id <- doi
   if (is.null(doi)) pkg$conceptid <- NULL
@@ -35,13 +37,10 @@ write_master <- function(pkg, overview, all_sources, directory, version, doi,
     old <- jsonlite::read_json(old_descriptor)
     unlink(file.path(directory, vapply(old$resources, function(r) r$path, character(1))))
   }
-  unlink(file.path(directory, "measurements.csv"))
+  unlink(file.path(directory, c("measurements.csv", "quality.csv")))
   GeoLocatoR::write_gldp(pkg, directory)
   readr::write_csv(pkg$datapackages, file.path(directory, "datapackages.csv"), na = "")
   readr::write_csv(pkg$species, file.path(directory, "species.csv"), na = "")
-  if (pkg$qualityControl$incomplete_metadata_flags + pkg$qualityControl$scientific_review_flags > 0) {
-    cli::cli_warn("Master quality.csv contains {pkg$qualityControl$incomplete_metadata_flags} incomplete-metadata and {pkg$qualityControl$scientific_review_flags} scientific-review flags; values are retained for review.")
-  }
   if (include_measurements) pkg <- write_master_measurements(pkg, sources, directory)
   cli::cli_inform("Wrote {directory}: {pkg$numberTags$tags} tags, release {version}.")
   pkg

@@ -1,5 +1,5 @@
 #' @noRd
-.add_master_quality <- function(pkg) {
+.add_master_flight_duration <- function(pkg) {
   # Sum actual flight gaps, excluding pauses at unlocated intermediate stops.
   if ("edges" %in% frictionless::resource_names(pkg)) {
     periods <- GeoLocatoR::staps(pkg) |>
@@ -24,6 +24,12 @@
       description = "Sum of gaps between consecutive stationary periods from stap_s to stap_t; excludes intermediate stationary time. Derived from staps, not end minus start for multi-flight connections.")))
   }
 
+  pkg
+}
+
+#' @noRd
+.master_quality <- function(pkg) {
+  pkg <- .add_master_flight_duration(pkg)
   issues <- list()
   for (resource in pkg$resources) {
     if (resource$name == "quality") next
@@ -59,22 +65,5 @@
   quality <- dplyr::bind_rows(tibble::tibble(resource = character(), row = integer(), field = character(), flag = character(), tag_id = character()),
     dplyr::bind_rows(issues)) |>
     dplyr::left_join(dplyr::select(GeoLocatoR::tags(pkg), tag_id, datapackage_id), by = "tag_id", relationship = "many-to-one")
-  # A separate resource preserves canonical source tables and exposes every flag.
-  pkg$resources <- Filter(function(r) r$name != "quality", pkg$resources)
-  quality_schema <- list(fields = lapply(names(quality), function(name) {
-    value <- quality[[name]]
-    list(name = name, type = if (inherits(value, "POSIXct")) "datetime" else if (is.integer(value)) "integer" else if (is.numeric(value)) "number" else "string")
-  }), primaryKey = c("resource", "row", "field"), fieldsMatch = "exact")
-  # frictionless::add_resource() rejects empty tables, which are valid here.
-  pkg$resources <- append(pkg$resources, list(list(name = "quality", data = quality,
-    schema = quality_schema, profile = "tabular-data-resource", type = "table",
-    `$schema` = "https://datapackage.org/profiles/2.0/dataresource.json")))
-  pkg$qualityControl <- list(
-    policy = "Unknown metadata and scientific review screens are warnings. Identifiers, joins and mathematical validity remain release failures. Original values are preserved.",
-    thresholds = list(ground_speed_kmh = 150, wind_speed_kmh = 100, distance_km = 3000,
-      altitude_min_m = -200, altitude_max_m = 7000, single_flight_min_minutes = 5, single_flight_max_hours = 50),
-    row_reference = "quality.row is the one-based data-row index in the named resource, excluding the CSV header; trajectory keys are also provided.",
-    incomplete_metadata_flags = sum(quality$flag == "incomplete_metadata"),
-    scientific_review_flags = sum(quality$flag == "scientific_review"))
-  pkg
+  quality
 }
