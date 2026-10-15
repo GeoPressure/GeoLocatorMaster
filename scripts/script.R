@@ -7,7 +7,7 @@ pkgload::load_all("../GeoLocatoR", quiet = TRUE)
 library(dplyr)
 library(readr)
 pkgload::load_all(quiet = TRUE)
-release_version <- "2026.0-beta"
+release_version <- "2026.0"
 master_record_id <- "18187093"
 master_doi <- paste0("https://doi.org/10.5281/zenodo.", master_record_id)
 
