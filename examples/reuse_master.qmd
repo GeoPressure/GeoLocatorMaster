@@ -7,7 +7,9 @@ format:
     code-fold: false
     code-tools: true
 params:
-  master_dir: "../data/master"
+  record_id: "18187093"
+  draft: true
+  master_dir: null
 execute:
   message: false
   warning: true
@@ -15,9 +17,11 @@ execute:
   fig-height: 5
 ---
 
-This walkthrough uses a local Master build to explore available data, select birds, summarise alternative trajectories, and examine flight speed and altitude. Raw measurements are available from the source project packages and are excluded from the routine Master export to reduce file size and loading time.
+This walkthrough reads the Master from Zenodo to explore available data, select birds, summarise alternative trajectories, and examine flight speed and altitude. Raw measurements are available from the source project packages and are excluded from the routine Master export to reduce file size and loading time.
 
-Render from the repository root with `quarto render examples/reuse_master.qmd`. Paths below are relative to this document's `examples/` directory. Change `params.master_dir` to use another downloaded release. Use the GeoLocatoR version compatible with that release.
+Render from the repository root with `quarto render examples/reuse_master.qmd`. The Master is currently a [Zenodo draft](https://zenodo.org/uploads/18187093), so reading it requires an authorised Zenodo token in the environment or system keyring. Once the record is published, set `params.draft` to `false`; public access will not require a token. Use the GeoLocatoR version compatible with that release.
+
+For offline testing, pass `-P master_dir:../data/master`. Local paths are relative to this document's `examples/` directory.
 
 ## Read a release
 
@@ -31,7 +35,11 @@ library(tidyr)
 library(ggplot2)
 
 theme_set(theme_minimal(base_size = 12))
-master <- read_gldp(params$master_dir, drop_measurements = TRUE)
+master <- if (is.null(params$master_dir)) {
+  read_zenodo(params$record_id, draft = params$draft)
+} else {
+  read_gldp(params$master_dir, drop_measurements = TRUE)
+}
 projects <- master$datapackages
 ```
 
