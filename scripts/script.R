@@ -78,6 +78,8 @@ overview |> count(access_status)
 GeoLocatoR::tags(master) |> count(scientific_name, sort = TRUE)
 occurrences |> summarise(occurrences = n(), missing_coordinates = sum(is.na(decimalLatitude) | is.na(decimalLongitude)))
 # source("tests/check_release.R") # Additional consistency checks, no extra outputs.
+# Run Rscript tests/test_release.R from the project root before draft synchronisation.
+# It tests the written package and saves diagnostics in output/release-audit/.
 
 # Optional: synchronise public files to the existing Zenodo draft -------------
 # Run after reviewing the local exports. This does not publish the draft.

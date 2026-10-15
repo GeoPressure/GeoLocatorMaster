@@ -8,3 +8,4 @@
 ^docs$
 ^examples$
 ^tests/check_release\.R$
+^tests/test_release\.R$
