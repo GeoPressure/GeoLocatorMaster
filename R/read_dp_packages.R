@@ -47,12 +47,14 @@ read_dp_packages <- function(
     record_path <- file.path(dp_dir, record_label, "zenodo_record.json")
     if (file.exists(record_path)) {
       pkg <- GeoLocatoR:::read_zenodo_attach_metadata(pkg, jsonlite::read_json(record_path))
+      pkg <- GeoLocatoR::update_gldp_bibliographic_citation(pkg)
     }
     source_tags <- GeoLocatoR::tags(pkg)
     source_tags$datapackage_id <- pkg$id
     pkg <- GeoLocatoR::add_gldp_resource(pkg, "tags", source_tags, cast_type = TRUE, replace = TRUE)
     for (field in c("temporal", "taxonomic")) pkg[[field]] <- descriptor[[field]]
     pkg$numberTags <- utils::modifyList(pkg$numberTags %||% list(), descriptor$numberTags %||% list())
+    pkg$numberTags$tags <- nrow(source_tags)
     pkg$source_measurements <- Filter(function(r) grepl("^measurements", r$name), descriptor$resources)
     if (!include_embargo && is_pkg_embargoed(pkg)) {
       cli::cli_warn(
