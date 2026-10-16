@@ -50,7 +50,7 @@
         (data$flight_duration_h < 5 / 60 | data$flight_duration_h >= 50)
     }
     if (resource$name == "pressurepaths") {
-      rules$altitude_m <- data$altitude <= -200 | data$altitude >= 7000
+      rules$altitude_m <- data$altitude <= -200 | data$altitude >= 10000
       if ("label" %in% names(data)) rules$altitude_m <- rules$altitude_m & !data$label %in% "discard"
     }
     for (rule in names(rules)) {

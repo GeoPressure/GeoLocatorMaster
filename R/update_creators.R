@@ -3,8 +3,8 @@
 #' @param pkgs A Master package containing contributors.
 #' @param dry_run If TRUE, return proposed creators without updating Zenodo.
 #' @return The merged creators and their identity keys, invisibly.
-#' @details Preserves accents, corrects seven known name-only source entries,
-#'   and merges unambiguous duplicates while retaining ORCIDs and affiliations.
+#' @details Preserves accents and corrects seven known name-only source entries.
+#'   Duplicates are merged upstream by `GeoLocatoR::merge_gldp()`.
 #'   With dry_run = FALSE, updates the Master draft without publishing it.
 #' @export
 update_creators <- function(pkgs, dry_run = TRUE) {
@@ -122,7 +122,7 @@ contributor_to_zenodo_creator <- function(contributor) {
 }
 
 apply_creators_update <- function(creators, dry_run = TRUE) {
-  merged <- merge_creators(creators)
+  merged <- order_creators(creators)
 
   if (length(merged$creators) == 0) {
     message("No creators found.")
@@ -142,118 +142,15 @@ apply_creators_update <- function(creators, dry_run = TRUE) {
   invisible(merged)
 }
 
-merge_creators <- function(creators) {
-  merged <- list()
-  keys <- character()
-
-  for (creator in creators) {
-    key <- creator_key(creator)
-    if (key == "") {
-      next
-    }
-
-    idx <- match(key, keys)
-    # Match an ORCID-less entry by name only when its identity is unambiguous.
-    if (is.na(idx) && length(merged)) {
-      same_name <- which(vapply(merged, function(x)
-        normalize_title(get_creator_name(x)) == normalize_title(get_creator_name(creator)), logical(1)))
-      orcids <- vapply(merged[same_name], creator_orcid, character(1))
-      incoming_orcid <- creator_orcid(creator)
-      if (length(same_name) == 1 && (orcids == "" || incoming_orcid == "" || orcids == incoming_orcid)) {
-        idx <- same_name
-      }
-    }
-    if (is.na(idx)) {
-      merged[[length(merged) + 1]] <- creator
-      keys <- c(keys, key)
-    } else {
-      merged[[idx]] <- merge_creator_pair(merged[[idx]], creator)
-      keys[idx] <- creator_key(merged[[idx]])
-    }
-  }
-
-  if (length(merged) == 0) {
+# Contributors are merged per person (ORCID or unambiguous name, with all roles
+# and affiliations) by GeoLocatoR::merge_gldp(); here they are only ordered.
+order_creators <- function(creators) {
+  if (length(creators) == 0) {
     return(list(creators = list(), warnings = character()))
   }
-
-  sorted <- order(vapply(merged, get_creator_name, character(1)))
-  merged <- merged[sorted]
-  merged <- reorder_creators_by_orcid(
-    merged,
-    first_orcid = "0000-0002-8185-1020"
-  )
-
-  list(creators = merged, warnings = character())
-}
-
-merge_creator_pair <- function(base, incoming) {
-  base_po <- base$person_or_org
-  incoming_po <- incoming$person_or_org
-
-  if (is.null(base_po) || length(base_po) == 0) {
-    base$person_or_org <- incoming_po
-  } else if (!is.null(incoming_po) && length(incoming_po) > 0) {
-    for (field in c("name", "given_name", "family_name")) {
-      if (get_scalar(base_po[[field]]) == "" && get_scalar(incoming_po[[field]]) != "") {
-        base_po[[field]] <- incoming_po[[field]]
-      }
-    }
-
-    if (is.null(base_po$identifiers) && !is.null(incoming_po$identifiers)) {
-      base_po$identifiers <- incoming_po$identifiers
-    }
-
-    base$person_or_org <- base_po
-  }
-
-  base$affiliations <- unique_affiliations(c(base$affiliations, incoming$affiliations))
-  if (length(base$affiliations) == 0) {
-    base$affiliations <- NULL
-  }
-
-  base
-}
-
-unique_affiliations <- function(affiliations) {
-  if (length(affiliations) == 0) {
-    return(list())
-  }
-
-  names_vec <- vapply(
-    affiliations,
-    function(aff) {
-      if (is.null(aff)) {
-        return("")
-      }
-      if (is.list(aff)) {
-        return(get_scalar(first_non_null(aff$name, aff$id)))
-      }
-      get_scalar(aff)
-    },
-    character(1)
-  )
-
-  names_vec <- unique(trimws(names_vec))
-  names_vec <- names_vec[nzchar(names_vec)]
-  lapply(names_vec, function(x) list(name = x))
-}
-
-creator_key <- function(entry) {
-  if (is.null(entry) || !is.list(entry)) {
-    return("")
-  }
-
-  orcid <- creator_orcid(entry)
-  if (orcid != "") {
-    return(paste0("orcid::", tolower(orcid)))
-  }
-
-  name <- normalize_title(get_creator_name(entry))
-  if (name == "") {
-    return("")
-  }
-
-  paste0("name::", name)
+  creators <- creators[order(vapply(creators, get_creator_name, character(1)))]
+  creators <- reorder_creators_by_orcid(creators, first_orcid = "0000-0002-8185-1020")
+  list(creators = creators, warnings = character())
 }
 
 creator_orcid <- function(entry) {
@@ -362,16 +259,12 @@ split_affiliations <- function(organization) {
     return(list())
   }
 
-  parts <- strsplit(value, "\\s*[,;]\\s*")[[1]]
+  # Organizations are separated by ";" (GeoLocatoR::merge_gldp() convention); a
+  # comma belongs to the address, e.g. "University of Cape Town, FitzPatrick Institute".
+  parts <- strsplit(value, "\\s*;\\s*")[[1]]
   parts <- unique(trimws(parts))
   parts <- parts[nzchar(parts)]
   lapply(parts, function(x) list(name = x))
-}
-
-normalize_title <- function(title) {
-  title <- tolower(trimws(get_scalar(title)))
-  title <- gsub("\\s+", " ", title)
-  title
 }
 
 first_non_null <- function(...) {

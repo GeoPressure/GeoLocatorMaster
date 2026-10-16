@@ -31,6 +31,7 @@ Source data, credentials and generated exports are not committed to Git. Raw mea
 - [`docs/metadata.md`](docs/metadata.md) and [`docs/master-metadata.json`](docs/master-metadata.json): fixed descriptor fields, DOI/version handling and Zenodo updates.
 - [`docs/gbif.md`](docs/gbif.md): current Darwin Core mapping and publication questions.
 - [`docs/measurements.md`](docs/measurements.md): local storage benchmark and optional measurement inclusion.
+- GeoPressureManual: [Use the Master](https://geopressure.org/GeoPressureManual/geolocator-master.html) shows how to read a release, select birds, cite their source packages and compare species, and [Read and use](https://geopressure.org/GeoPressureManual/geolocator-read.html) covers a single package.
 - [`examples/reuse_master.qmd`](examples/reuse_master.qmd): illustrated walkthrough of filtering, trajectory and altitude summaries, flight speeds and source citations. Render with `quarto render examples/reuse_master.qmd --output-dir ../output/reuse-master-vignette`.
 
 Analysis and plotting scripts have moved to the separate GeoLocatorAnalysis project. They are outside this repository's build workflow. Package help is generated from the roxygen comments in `R/` and committed in `man/`.

@@ -18,7 +18,7 @@ The merged creators and their identity keys, invisibly.
 Update the Master Zenodo creators from package contributors
 }
 \details{
-Preserves accents, corrects seven known name-only source entries,
-and merges unambiguous duplicates while retaining ORCIDs and affiliations.
+Preserves accents and corrects seven known name-only source entries.
+Duplicates are merged upstream by \code{GeoLocatoR::merge_gldp()}.
 With dry_run = FALSE, updates the Master draft without publishing it.
 }

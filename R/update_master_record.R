@@ -30,7 +30,8 @@
   }
 
   draft <- httr2::resp_body_json(draft_response, simplifyVector = FALSE)
-  draft$metadata <- utils::modifyList(draft$metadata, metadata)
+  # Replace whole fields: modifyList() keeps unnamed lists such as creators unchanged.
+  draft$metadata[names(metadata)] <- metadata
   # Registered licences accept only an ID, not the returned display fields.
   for (i in seq_along(draft$metadata$rights)) {
     if (!is.null(draft$metadata$rights[[i]]$id)) {

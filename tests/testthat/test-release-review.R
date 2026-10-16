@@ -14,7 +14,7 @@ test_that("incomplete metadata and scientific screens are preserved as explicit 
     distance >= 3000 | distance_speed_kmh >= 150 | ground_speed_kmh >= 150 | wind_speed_kmh >= 100)
   unusual_altitude <- master_pressure |>
     dplyr::filter(is.na(label) | label != "discard") |>
-    dplyr::filter(altitude <= -200 | altitude >= 7000) |>
+    dplyr::filter(altitude <= -200 | altitude >= 10000) |>
     dplyr::left_join(dplyr::select(master_tags, tag_id, datapackage_id, scientific_name), by = "tag_id")
   coverage <- master_pressure |> dplyr::group_by(tag_id, type, j) |>
     dplyr::summarise(rows = dplyr::n(), discarded = sum(label == "discard", na.rm = TRUE),
@@ -57,7 +57,7 @@ test_that("incomplete metadata and scientific screens are preserved as explicit 
   }
   altitude_flags <- quality |> dplyr::filter(resource == "pressurepaths", field == "altitude_m")
   expect_setequal(altitude_flags$row, which((is.na(master_pressure$label) | master_pressure$label != "discard") &
-    (master_pressure$altitude <= -200 | master_pressure$altitude >= 7000)))
+    (master_pressure$altitude <= -200 | master_pressure$altitude >= 10000)))
   speed_flags <- quality |> dplyr::filter(resource == "edges", field == "ground_speed_kmh")
   expect_setequal(speed_flags$row, which(sqrt(master_edges$gs_u^2 + master_edges$gs_v^2) >= 150))
   metadata_flags <- dplyr::filter(quality, flag == "incomplete_metadata")

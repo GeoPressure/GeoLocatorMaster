@@ -2,7 +2,10 @@
 #'
 #' @param pkgs Named source packages from read_dp_packages().
 #' @param dp_dir Local source package cache.
-#' @return Source metadata with measurement sizes, counts and sensor intervals.
+#' @return Source metadata with measurement sizes, counts, sensor intervals and
+#'   trajectory coverage: the percentage of trajectories whose most likely
+#'   flights include wind (`trajectories_with_wind_pct`) and the median number of
+#'   simulated trajectories per tracked tag (`simulations_per_trajectory_median`).
 #' @importFrom dplyr .data
 #' @export
 datapackage_overview <- function(pkgs, dp_dir = file.path("data", "dp")) {
@@ -20,6 +23,19 @@ datapackage_overview <- function(pkgs, dp_dir = file.path("data", "dp")) {
       rows <- rows + summary$rows
       bytes <- bytes + file.info(path)$size
     }
+    # Trajectory coverage: tracked tags whose most likely flights have wind, and
+    # simulations per tracked tag (missing for packages without local paths).
+    coverage <- tibble::tibble(trajectories_with_wind_pct = NA_real_, simulations_per_trajectory_median = NA_real_)
+    if (all(c("paths", "edges") %in% frictionless::resource_names(pkg))) {
+      paths <- GeoLocatoR::paths(pkg)
+      edges <- GeoLocatoR::edges(pkg)
+      tracked <- unique(paths$tag_id[paths$type %in% c("most_likely", "geopressureviz")])
+      with_wind <- unique(edges$tag_id[edges$type == "most_likely" & !is.na(edges$ws_u %||% NA)])
+      n_sim <- vapply(tracked, function(id) dplyr::n_distinct(paths$j[paths$type == "simulation" & paths$tag_id == id]), numeric(1))
+      if (length(tracked)) coverage <- tibble::tibble(
+        trajectories_with_wind_pct = round(100 * mean(tracked %in% with_wind), 1),
+        simulations_per_trajectory_median = stats::median(n_sim))
+    }
     interval_table <- dplyr::bind_rows(intervals)
     if (nrow(interval_table)) {
       interval_table <- interval_table |>
@@ -35,6 +51,7 @@ datapackage_overview <- function(pkgs, dp_dir = file.path("data", "dp")) {
     }
     summaries[[record_label]] <- dplyr::bind_cols(
       tibble::tibble(datapackage_id = pkg$id, measurement_rows_cached = rows, measurement_bytes_cached = bytes),
+      coverage,
       interval_table)
   }
   dplyr::left_join(metadata, dplyr::bind_rows(summaries), by = "datapackage_id")

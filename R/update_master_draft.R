@@ -20,7 +20,7 @@ update_master_draft <- function(record_id, pkg, sources, files, update_metadata 
                          auto_unbox = TRUE, pretty = TRUE, null = "null")
   }
   draft$metadata$version <- pkg$version
-  draft$metadata$creators <- merge_creators(get_creators_from_pkgs(pkg))$creators
+  draft$metadata$creators <- order_creators(get_creators_from_pkgs(pkg))$creators
   # Registered licences accept only an ID, not the returned display fields.
   for (i in seq_along(draft$metadata$rights)) {
     if (!is.null(draft$metadata$rights[[i]]$id)) {

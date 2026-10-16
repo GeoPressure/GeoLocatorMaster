@@ -6,7 +6,7 @@ The release workflow is consolidated in the main script; analysis and plotting s
 
 ## Catalogue columns
 
-`datapackages.csv` includes identifiers, titles, versions, access status, contributors, licences, related identifiers, temporal/species coverage and resource/sensor tag counts. The catalogue and species table cover all contributing projects, including embargoed ones; public resource rows come only from open projects. Both tables also appear in `datapackage.json`.
+`datapackages.csv` includes identifiers, titles, versions, access status, contributors (separated by `; `), licences, related identifiers, temporal/species coverage, resource/sensor tag counts and trajectory coverage: `trajectories_with_wind_pct` (share of tracked tags whose most likely flights include wind) and `simulations_per_trajectory_median`. The catalogue and species table cover all contributing projects, including embargoed ones; public resource rows come only from open projects. Both tables also appear in `datapackage.json`.
 
 `samplingInterval_<sensor>_min` lists the most frequent positive within-tag intervals accounting for 95% of consecutive pairs, in decreasing frequency order. Summaries include labelled measurements. `measurement_rows_cached` and `measurement_bytes_cached` describe source files on disk, rather than rows included in the Master. Small `*.summary.rds` caches beside source measurements avoid rescanning gigabytes on every build.
 
