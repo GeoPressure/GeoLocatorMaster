@@ -69,7 +69,7 @@ restore_master_field_types <- function(pkg, sources, dp_dir = file.path("data", 
         resource$schema$fields[[j]]$type <- types
       }
     }
-    if (is.data.frame(resource$data)) resource$data <- GeoLocatoR:::cast_table(resource$data, resource$schema)
+    if (is.data.frame(resource$data)) resource$data <- GeoLocatoR:::gldp_cast_table(resource$data, resource$schema)
     pkg$resources[[i]] <- resource
   }
   pkg
