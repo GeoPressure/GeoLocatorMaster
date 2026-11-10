@@ -23,6 +23,9 @@ write_master <- function(pkg, overview, all_sources, directory, version, doi,
   if (is.null(doi)) pkg$conceptid <- NULL
   pkg$version <- version
   pkg$access_status <- if (is.null(doi)) "restricted" else "open"
+  # Relate the Master only to the source versions it compiles, not to the sources' own relations.
+  pkg$relatedIdentifiers <- unname(lapply(sources, function(source) list(relationType = "IsCompiledBy",
+    relatedIdentifier = sub("^https://doi.org/", "", source$id), resourceTypeGeneral = "Dataset", relatedIdentifierType = "DOI")))
   # Recompute the citation from the Master title and DOIs, not the merged source titles.
   pkg <- GeoLocatoR::update_gldp_bibliographic_citation(pkg)
   pkg$datapackages <- overview

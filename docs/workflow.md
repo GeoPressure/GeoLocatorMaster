@@ -16,7 +16,7 @@ Measurement-derived coverage and sensor counts are also retained in `measurement
 
 The routine build uses exported functions so they are also available after loading the package. `write_master()` reads fixed metadata from `docs/master-metadata.json` relative to the project root, writes resource tables and catalogues, and returns the Master object. `update_master_draft()` updates an existing draft's version, creators, source relationships and complete file set; it deletes obsolete draft files and does not publish.
 
-`update_creators()` and `update_related_identifiers()` default to dry runs. The former returns the proposed merged creators; the latter proposes source concept-DOI relationships and replaces the full relationship list when applied. Prefer `update_master_draft()` for release-specific source DOIs and preservation of unrelated relationships.
+`update_creators()` and `update_related_identifiers()` default to dry runs. The former returns the proposed merged creators; the latter proposes `iscompiledby` relationships to the version DOIs of the open sources and replaces the full relationship list when applied. Prefer `update_master_draft()`, which uses the sources of the release and preserves unrelated Master relationships.
 
 Use `Rscript tests/test_creators.R` and `Rscript tests/test_pipeline.R` from the project root for focused checks without source data or the taxonomy workbook. `tests/check_release.R` runs in the main workflow's R session because it inspects `master`, `occurrences`, `public_sources` and `master_doi`; it is excluded from package builds. A complete release build requires GeoLocatoR 1.5.1 or later and local inputs.
 

@@ -18,7 +18,7 @@ update_master_draft(
 
 \item{pkg}{Public Master package.}
 
-\item{sources}{Public source packages used in this release.}
+\item{sources}{Open source packages whose data are in this release.}
 
 \item{files}{Local public Master files to upload.}
 

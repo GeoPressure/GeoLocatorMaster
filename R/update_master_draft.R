@@ -2,7 +2,7 @@
 #'
 #' @param record_id Existing draft record ID.
 #' @param pkg Public Master package.
-#' @param sources Public source packages used in this release.
+#' @param sources Open source packages whose data are in this release.
 #' @param files Local public Master files to upload.
 #' @param update_metadata Set FALSE to resume file uploads after metadata was updated.
 #' @param audit_dir Optional directory for before/after draft snapshots; NULL writes none.
@@ -29,12 +29,14 @@ update_master_draft <- function(record_id, pkg, sources, files, update_metadata 
       draft$metadata$rights[[i]]$icon <- NULL
     }
   }
-  # A compilation compiles its source datasets; the inverse belongs on sources.
+  # The Master is compiled by the source version DOIs in this release (DataCite IsCompiledBy).
+  # Drop previous compilation links and relations copied from the sources' own metadata.
+  copied <- tolower(unlist(lapply(sources, function(source) lapply(source$relatedIdentifiers, function(x) x$relatedIdentifier))))
   draft$metadata$related_identifiers <- unname(c(
-    Filter(function(x) !x$relation_type$id %in% c("compiles", "iscompiledby"),
+    Filter(function(x) !x$relation_type$id %in% c("compiles", "iscompiledby") && !tolower(x$identifier) %in% copied,
            draft$metadata$related_identifiers),
     lapply(sources, function(source) list(identifier = sub("^https://doi.org/", "", source$id),
-      scheme = "doi", relation_type = list(id = "compiles"), resource_type = list(id = "dataset")))))
+      scheme = "doi", relation_type = list(id = "iscompiledby"), resource_type = list(id = "dataset")))))
   if (update_metadata) httr2::request(draft_url) |>
     httr2::req_options(ipresolve = 1L) |>
     httr2::req_auth_bearer_token(token) |>
