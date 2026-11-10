@@ -12,7 +12,8 @@ datapackage_overview(pkgs, dp_dir = file.path("data", "dp"))
 \item{dp_dir}{Local source package cache.}
 }
 \value{
-Source metadata with measurement sizes, counts, sensor intervals and
+Source metadata with contributor roles (\code{contributor_roles}, e.g.
+\verb{Name (contactperson); Name (researcher)}), measurement sizes, counts, sensor intervals and
 trajectory coverage: the percentage of trajectories whose most likely
 flights include wind (\code{trajectories_with_wind_pct}) and the median number of
 simulated trajectories per tracked tag (\code{simulations_per_trajectory_median}).
