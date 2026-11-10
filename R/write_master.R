@@ -23,6 +23,8 @@ write_master <- function(pkg, overview, all_sources, directory, version, doi,
   if (is.null(doi)) pkg$conceptid <- NULL
   pkg$version <- version
   pkg$access_status <- if (is.null(doi)) "restricted" else "open"
+  # Recompute the citation from the Master title and DOIs, not the merged source titles.
+  pkg <- GeoLocatoR::update_gldp_bibliographic_citation(pkg)
   pkg$datapackages <- overview
   # Metadata catalogues cover all projects; resource tables contain only sources.
   species_pkg <- GeoLocatoR::create_gldp()
