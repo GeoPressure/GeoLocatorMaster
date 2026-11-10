@@ -2,7 +2,7 @@
 
 `master-metadata.json` contains the Master title, concept DOI, code repository, licence and record type. `write_master()` reads these fields when writing the descriptor; edit the file rather than the R code. They are required to describe the package but do not need to be redefined in each build. A different descriptor can be supplied with the `metadata` argument. Restricted copies omit the public DOI and concept DOI.
 
-The Master concept DOI is [10.5281/zenodo.18187092](https://doi.org/10.5281/zenodo.18187092). The existing revision draft is [Zenodo draft 18187093](https://zenodo.org/uploads/18187093); the release under preparation is `2026.0`.
+The Master concept DOI is [10.5281/zenodo.18187092](https://doi.org/10.5281/zenodo.18187092). Release `2026.0` was published on 2026-10-16 with the version DOI [10.5281/zenodo.18187093](https://doi.org/10.5281/zenodo.18187093).
 
 Use the two DOIs for different purposes:
 
