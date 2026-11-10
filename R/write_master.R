@@ -33,7 +33,10 @@ write_master <- function(pkg, overview, all_sources, directory, version, doi,
   species_pkg <- GeoLocatoR::create_gldp()
   species_pkg <- GeoLocatoR::add_gldp_resource(species_pkg, "tags",
     dplyr::bind_rows(lapply(all_sources, GeoLocatoR::tags)), cast_type = TRUE)
-  pkg$species <- .add_species(species_pkg)$species
+  # Species is a custom table resource (GeoLocator-DP >= 1.0), written and read like any table.
+  # Drop the top-level table set by enhanced_pkgs(), which read_gldp() does not restore.
+  pkg$species <- NULL
+  pkg <- frictionless::add_resource(pkg, "species", .add_species(species_pkg)$species)
 
   dir.create(directory, recursive = TRUE, showWarnings = FALSE)
   # Remove only previous standard exports, so optional resources cannot linger.
@@ -45,7 +48,6 @@ write_master <- function(pkg, overview, all_sources, directory, version, doi,
   unlink(file.path(directory, c("measurements.csv", "quality.csv")))
   GeoLocatoR::write_gldp(pkg, directory)
   readr::write_csv(pkg$datapackages, file.path(directory, "datapackages.csv"), na = "")
-  readr::write_csv(pkg$species, file.path(directory, "species.csv"), na = "")
   if (include_measurements) pkg <- write_master_measurements(pkg, sources, directory)
   cli::cli_inform("Wrote {directory}: {pkg$numberTags$tags} tags, release {version}.")
   pkg

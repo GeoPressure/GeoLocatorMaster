@@ -10,7 +10,7 @@ stopifnot(!anyDuplicated(GeoLocatoR::tags(master)$tag_id),
           all(is.na(occurrences$maximumElevationInMeters) | is.finite(occurrences$maximumElevationInMeters)))
 for (directory in "data/master") {
   descriptor <- jsonlite::read_json(file.path(directory, "datapackage.json"), simplifyVector = TRUE)
-  for (table in c("datapackages", "species")) {
+  for (table in "datapackages") {
     csv <- read_csv(file.path(directory, paste0(table, ".csv")),
                     col_types = cols(.default = "c"), show_col_types = FALSE)
     embedded <- as_tibble(descriptor[[table]])
