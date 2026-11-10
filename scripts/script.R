@@ -1,9 +1,7 @@
 # Run manually, section by section, from the GeoLocatorMaster project root.
 
 # Load packages and choose the release --------------------------------------
-# Use the adjacent GeoLocatoR development checkout for the DwC taxonomy option.
-pkgload::load_all("../GeoLocatoR", quiet = TRUE)
-# library(GeoLocatoR) # Use instead when scientific_name_ids is released.
+library(GeoLocatoR)
 library(dplyr)
 library(readr)
 pkgload::load_all(quiet = TRUE)

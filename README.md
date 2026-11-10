@@ -4,7 +4,7 @@ Build and maintain the [Master GeoLocator Data Package](https://doi.org/10.5281/
 
 ## Setup
 
-Use R 4.4 or later and clone this repository beside a `GeoLocatoR` checkout. The current workflow requires the GeoLocatoR development API, including `read_gldp(drop_measurements = TRUE)`, `gldp_to_dwc()` and `gldp_to_eml()`. It was checked with GeoLocatoR commit `c381e0536a0614ce341726da48ad58a83131c57e` on `dev`; an older installed release may not provide these features.
+Use R 4.4 or later and GeoLocatoR 1.5.1 or later (`pak::pkg_install("GeoPressure/GeoLocatoR")`). The workflow uses `read_gldp(drop_measurements = TRUE)`, `gldp_to_dwc(scientific_name_ids = )` and `gldp_to_eml()`, released since GeoLocatoR 1.4.0, and internal GeoLocatoR helpers that match 1.5.1.
 
 Install the dependencies listed in [`DESCRIPTION`](DESCRIPTION), including `pkgload` for local development and `ebirdst` for species enrichment. Place the taxonomy workbook at `data/AviList-v2025-11Jun-extended.xlsx`; it is a required local input and is not distributed in this repository. The reuse walkthrough requires Quarto, `knitr`, `rmarkdown` and `ggplot2`. Arrow is optional for the separate measurement-storage investigation.
 
@@ -38,7 +38,7 @@ Analysis and plotting scripts have moved to the separate GeoLocatorAnalysis proj
 
 ## Check changes
 
-Run these focused checks from the project root with the adjacent GeoLocatoR checkout available; the fixtures do not require downloaded source data or the taxonomy workbook:
+Run these focused checks from the project root; the fixtures do not require downloaded source data or the taxonomy workbook:
 
 ```sh
 Rscript tests/test_creators.R

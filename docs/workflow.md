@@ -18,7 +18,7 @@ The routine build uses exported functions so they are also available after loadi
 
 `update_creators()` and `update_related_identifiers()` default to dry runs. The former returns the proposed merged creators; the latter proposes source concept-DOI relationships and replaces the full relationship list when applied. Prefer `update_master_draft()` for release-specific source DOIs and preservation of unrelated relationships.
 
-Use `Rscript tests/test_creators.R` and `Rscript tests/test_pipeline.R` from the project root for focused checks without source data or the taxonomy workbook. `tests/check_release.R` runs in the main workflow's R session because it inspects `master`, `occurrences`, `public_sources` and `master_doi`; it is excluded from package builds. A complete release build requires the development dependency and local inputs.
+Use `Rscript tests/test_creators.R` and `Rscript tests/test_pipeline.R` from the project root for focused checks without source data or the taxonomy workbook. `tests/check_release.R` runs in the main workflow's R session because it inspects `master`, `occurrences`, `public_sources` and `master_doi`; it is excluded from package builds. A complete release build requires GeoLocatoR 1.5.1 or later and local inputs.
 
 ## Local caches and analysis files
 

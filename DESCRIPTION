@@ -14,7 +14,7 @@ Imports:
     cli,
     dplyr,
     frictionless,
-    GeoLocatoR,
+    GeoLocatoR (>= 1.5.1),
     glue,
     httr2,
     jsonlite,
