@@ -2,7 +2,7 @@
 
 The routine workflow is in `scripts/script.R`. It calls `download_community()`, `read_dp_packages()`, `datapackage_overview()`, `merge_without_measurements()`, `write_master()` and `GeoLocatoR::gldp_to_dwc()`. These represent separate steps with useful intermediate objects. Only the Zenodo upload is an optional remote write; source refresh downloads and caches input files.
 
-The release workflow is consolidated in the main script; analysis and plotting scripts are maintained in the separate GeoLocatorAnalysis project. Release checks remain available in `tests/check_release.R`, without generating audit files. Existing functions and their flexibility are retained, including separate creator/relationship updates, package preparation, identifier correction and optional measurement export. Most functions in `R/` are internal helpers for these operations; they do not need to be called manually. The new `write_master()` and `update_master_draft()` functions keep descriptor generation and draft synchronisation explicit.
+The release workflow is consolidated in the main script; analysis and plotting scripts are not part of this repository. Release checks remain available in `tests/check_release.R`, without generating audit files. Existing functions and their flexibility are retained, including separate creator/relationship updates, package preparation, identifier correction and optional measurement export. Most functions in `R/` are internal helpers for these operations; they do not need to be called manually. The new `write_master()` and `update_master_draft()` functions keep descriptor generation and draft synchronisation explicit.
 
 ## Catalogue columns
 
@@ -20,9 +20,7 @@ The routine build uses exported functions so they are also available after loadi
 
 Use `Rscript tests/test_creators.R` and `Rscript tests/test_pipeline.R` from the project root for focused checks without source data or the taxonomy workbook. `tests/check_release.R` runs in the main workflow's R session because it inspects `master`, `occurrences`, `public_sources` and `master_doi`; it is excluded from package builds. A complete release build requires GeoLocatoR 1.5.1 or later and local inputs.
 
-## Local caches and analysis files
-
-On the maintainer’s machine, debugging outputs, backups and storage benchmarks were archived in `../GeoLocatorAnalysis/archive/master-build-2026-10-13/`. The measurement benchmark script lives in `../GeoLocatorAnalysis/scripts/profile_measurements.R`. These local paths are historical notes, not inputs distributed with this repository.
+## Local caches
 
 `data/dp/community_records.json` supports offline rebuilding of the last discovered inventory. Keep this file and the source folders for reproducibility. Source folders may include older versions; the main script selects only those listed in the inventory. Deleting the cache forces fresh downloads and may lose access to embargoed files that are available only locally.
 
