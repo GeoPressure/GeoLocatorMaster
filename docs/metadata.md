@@ -6,8 +6,8 @@ The Master concept DOI is [10.5281/zenodo.18187092](https://doi.org/10.5281/zeno
 
 Use the two DOIs for different purposes:
 
-- **Version DOI** (`id`, e.g. 10.5281/zenodo.18187093 for `2026.0`): for citation, for reading a release (`read_zenodo("18187093")`) and wherever results must be traced to fixed data. This applies to the Master and to each source package (`datapackage_id`).
-- **Concept DOI** (`conceptid`, 10.5281/zenodo.18187092 for the Master): wherever a link must hold across versions, such as "get the latest release" links, and to identify a source package independently of its version (`datapackages$conceptid`), which avoids counting two versions of the same package twice.
+- **Concept DOI** (`conceptid`, 10.5281/zenodo.18187092 for the Master): for citation, as in `bibliographicCitation`, wherever a link must hold across versions, such as "get the latest release" links, and to identify a source package independently of its version (`datapackages$conceptid`), which avoids counting two versions of the same package twice.
+- **Version DOI** (`id`, e.g. 10.5281/zenodo.18187093 for `2026.0`): for reading a release (`read_zenodo("18187093")`) and for reproducibility: cite the concept DOI and record the version you used (e.g. in the methods). This applies to the Master and to each source package (`datapackage_id`).
 
 Fixed Zenodo fields such as description, keywords, community membership and publisher information stay on the existing record. `update_master_draft()` only updates changing version, creators, source DOI relationships and files. It does not publish. Optional `audit_dir` saves before/after snapshots outside the normal outputs.
 
