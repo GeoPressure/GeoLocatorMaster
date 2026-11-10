@@ -142,7 +142,7 @@ ggplot(stopovers |> filter(!is.na(lat)), aes(lat, duration_days)) +
 
 ## Compare flight speed estimates
 
-Edges use kilometres and kilometres per hour. `flight_duration_h` excludes intermediate stationary time. We restrict this example to individual flights (`n == 1`); connections spanning omitted stops need separate interpretation.
+Edges use kilometres and kilometres per hour. Flight duration is computed from `start` and `end`, which for a single flight (`n == 1`) is the flight time. We restrict this example to individual flights (`n == 1`); connections spanning omitted stops need separate interpretation.
 
 Ground speed is the magnitude of the ground velocity vector. Air speed is the magnitude of the ground velocity minus the wind vector, rather than the difference between their magnitudes. Missing wind leaves air speed missing. Distance divided by duration and vector means use different geometry and need not agree.
 
@@ -150,7 +150,7 @@ Ground speed is the magnitude of the ground velocity vector. Air speed is the ma
 #| label: fig-flight-speed
 #| fig-cap: "Distance-derived speed versus ground vector speed for individual flights in the most likely Hoopoe trajectories. The line indicates equality; extreme values remain visible for review."
 flights <- edges(selected) |> filter(type == "most_likely", n == 1) |>
-  mutate(duration_h = flight_duration_h,
+  mutate(duration_h = as.numeric(difftime(end, start, units = "hours")),
     distance_speed_kmh = distance / duration_h,
     ground_speed_kmh = sqrt(gs_u^2 + gs_v^2),
     wind_speed_kmh = sqrt(ws_u^2 + ws_v^2),
