@@ -2,6 +2,10 @@
 
 Build and maintain the [Master GeoLocator Data Package](https://doi.org/10.5281/zenodo.18187092) from the Zenodo `geolocator-dp` community, and prepare Darwin Core and EML files for GBIF review. This is an internal R project package with an interactive release workflow.
 
+The Master and the [GeoLocator Data Package](https://geopressure.org/GeoLocator-DP/) standard are described in:
+
+> Nussbaumer, R., Adamík, P., Bell, F., et al. (2026). Standardised multi-sensor geolocator data for bird migration ecology. *Scientific Data*. <https://doi.org/10.1038/s41597-026-08873-x>
+
 ## Setup
 
 Use R 4.4 or later and GeoLocatoR 1.5.1 or later (`pak::pkg_install("GeoPressure/GeoLocatoR")`). The workflow uses `read_gldp(drop_measurements = TRUE)`, `gldp_to_dwc(scientific_name_ids = )` and `gldp_to_eml()`, released since GeoLocatoR 1.4.0, and internal GeoLocatoR helpers that match 1.5.1.

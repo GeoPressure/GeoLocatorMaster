@@ -3,7 +3,8 @@
 #' @param pkgs A Master package containing a datapackages catalogue.
 #' @param dry_run If TRUE, return proposed relationships without updating Zenodo.
 #' @return A list containing related, invisibly.
-#' @details Replaces the Master draft's related identifiers with IsCompiledBy
+#' @details Replaces the Master draft's related identifiers with the
+#'   IsDescribedBy relationship to the Master data paper and IsCompiledBy
 #'   relationships to the version DOIs of the catalogue's open sources. To
 #'   preserve other relationships, use [update_master_draft()].
 #' @export
@@ -22,7 +23,11 @@ update_related_identifiers <- function(
     )
   })
 
-  if (length(related) == 0) {
+  # Keep the data paper describing the Master.
+  related <- c(list(list(identifier = .master_paper_doi, scheme = "doi",
+    relation_type = list(id = "isdescribedby"), resource_type = list(id = "publication-article"))), related)
+
+  if (length(related) == 1) {
     message("No DOI values found in pkgs$datapackages.")
     return(invisible(list(related = related)))
   }

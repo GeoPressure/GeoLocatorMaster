@@ -10,5 +10,5 @@
     }
   ],
   "record_type": "dataset",
-  "description": "The Master GeoLocator Data Package compiles curated, open-access project-level bird geolocator datasets in a shared structure, preserving source identifiers and attribution. It contains device and field-observation tables and available movement-analysis outputs. Source and species catalogues also describe contributing embargoed projects; their data are excluded from the public resource tables."
+  "description": "The Master GeoLocator Data Package compiles curated, open-access project-level bird geolocator datasets in a shared structure, preserving source identifiers and attribution. It contains device and field-observation tables and available movement-analysis outputs. Source and species catalogues also describe contributing embargoed projects; their data are excluded from the public resource tables. The Master and the GeoLocator Data Package standard are described in Nussbaumer et al. (2026), Scientific Data, https://doi.org/10.1038/s41597-026-08873-x."
 }

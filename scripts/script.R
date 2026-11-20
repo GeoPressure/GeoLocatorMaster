@@ -69,7 +69,10 @@ eml_pkg$spatial <- list(type = "Polygon", coordinates = list(list(
   c(longitude_range[1], latitude_range[1]), c(longitude_range[2], latitude_range[1]),
   c(longitude_range[2], latitude_range[2]), c(longitude_range[1], latitude_range[2]),
   c(longitude_range[1], latitude_range[1]))))
-eml <- GeoLocatoR::gldp_to_eml(eml_pkg, "data/dwc")
+eml <- GeoLocatoR::gldp_to_eml(eml_pkg, NULL)
+# Cite the Master data paper in the GBIF bibliography.
+eml$additionalMetadata <- list(metadata = list(gbif = list(bibliography = list(citation = .master_paper_citation))))
+EML::write_eml(eml, "data/dwc/eml.xml")
 
 # Review the outputs --------------------------------------------------------
 overview |> count(access_status)

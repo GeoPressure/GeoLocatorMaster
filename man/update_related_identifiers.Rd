@@ -18,7 +18,8 @@ A list containing related, invisibly.
 Update the Master Zenodo source relationships
 }
 \details{
-Replaces the Master draft's related identifiers with IsCompiledBy
+Replaces the Master draft's related identifiers with the
+IsDescribedBy relationship to the Master data paper and IsCompiledBy
 relationships to the version DOIs of the catalogue's open sources. To
 preserve other relationships, use \code{\link[=update_master_draft]{update_master_draft()}}.
 }

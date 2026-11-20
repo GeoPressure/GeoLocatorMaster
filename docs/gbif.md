@@ -1,6 +1,6 @@
 # Darwin Core export
 
-`GeoLocatoR::gldp_to_dwc()` owns the generic transformation from a GeoLocator Data Package to Darwin Core. The GBIF section of `scripts/script.R` adds the Master release DOI, source DOI references and source-specific licences. `GeoLocatoR::gldp_to_eml()` writes the matching dataset metadata, with coverage computed from the exported occurrences.
+`GeoLocatoR::gldp_to_dwc()` owns the generic transformation from a GeoLocator Data Package to Darwin Core. The GBIF section of `scripts/script.R` adds the Master release DOI, source DOI references and source-specific licences. `GeoLocatoR::gldp_to_eml()` writes the matching dataset metadata, with coverage computed from the exported occurrences; the script adds the Master data paper to the GBIF bibliography.
 
 The workflow requires the GeoLocatoR release described in the README. It generates `data/dwc/occurrence.csv` and `data/dwc/eml.xml` for review. It does not publish to GBIF or configure an IPT. A valid EML file alone does not establish that the occurrence mapping is ready for publication.
 

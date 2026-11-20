@@ -31,10 +31,13 @@ update_master_draft <- function(record_id, pkg, sources, files, update_metadata 
   }
   # The Master is compiled by the source version DOIs in this release (DataCite IsCompiledBy).
   # Drop previous compilation links and relations copied from the sources' own metadata.
+  # The Master is described by its data paper (DataCite IsDescribedBy), set once here.
   copied <- tolower(unlist(lapply(sources, function(source) lapply(source$relatedIdentifiers, function(x) x$relatedIdentifier))))
   draft$metadata$related_identifiers <- unname(c(
-    Filter(function(x) !x$relation_type$id %in% c("compiles", "iscompiledby") && !tolower(x$identifier) %in% copied,
-           draft$metadata$related_identifiers),
+    Filter(function(x) !x$relation_type$id %in% c("compiles", "iscompiledby") &&
+             !tolower(x$identifier) %in% c(copied, .master_paper_doi), draft$metadata$related_identifiers),
+    list(list(identifier = .master_paper_doi, scheme = "doi", relation_type = list(id = "isdescribedby"),
+      resource_type = list(id = "publication-article"))),
     lapply(sources, function(source) list(identifier = sub("^https://doi.org/", "", source$id),
       scheme = "doi", relation_type = list(id = "iscompiledby"), resource_type = list(id = "dataset")))))
   if (update_metadata) httr2::request(draft_url) |>
