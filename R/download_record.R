@@ -43,6 +43,10 @@ download_record <- function(
     )
     return(invisible(NULL))
   }
+  # Community search lists no files for embargoed records: fetch the record with the token.
+  if (length(record$files$entries) == 0) {
+    record <- .read_zenodo_record(rec = record_id, token = token)
+  }
 
   record_dir <- file.path(dp_dir, record_label)
   dir.create(record_dir, recursive = TRUE, showWarnings = FALSE)
