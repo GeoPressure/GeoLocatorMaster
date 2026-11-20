@@ -21,10 +21,13 @@ test_that("the release identifies its version and public source datasets", {
 test_that("every CSV header matches its exported descriptor", {
   skip_without_release()
   for (resource in master_descriptor$resources) {
+    # params.json is plain JSON without a table schema
+    if (is.null(resource$schema)) next
     header <- names(readr::read_csv(file.path(master_dir, resource$path), n_max = 0, show_col_types = FALSE))
     expect_identical(header, vapply(resource$schema$fields, `[[`, character(1), "name"), info = resource$name)
   }
-  for (name in c("datapackages", "species")) {
+  # species is a table resource, checked above; only the catalogue is also embedded
+  for (name in "datapackages") {
     csv <- readr::read_csv(file.path(master_dir, paste0(name, ".csv")),
       col_types = readr::cols(.default = "c"), show_col_types = FALSE)
     embedded <- dplyr::bind_rows(lapply(master_descriptor[[name]], function(row) {

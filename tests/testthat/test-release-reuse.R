@@ -18,10 +18,14 @@ test_that("users can select tags by species, project, sex, time, region and avai
     selected <- GeoLocatoR::select_gldp(master_release, ids)
     expect_setequal(GeoLocatoR::tags(selected)$tag_id, ids)
     expect_equal(selected$numberTags$tags, length(ids), info = name)
+    rings <- master_tags$ring_number[master_tags$tag_id %in% ids]
     for (i in seq_along(master_release$resources)) {
       original <- master_release$resources[[i]]$data
       if (!"tag_id" %in% names(original)) next
-      expect_equal(selected$resources[[i]]$data, original[original$tag_id %in% ids, , drop = FALSE],
+      keep <- original$tag_id %in% ids
+      # select_gldp() also keeps untagged observations of the selected birds (by ring_number)
+      if ("ring_number" %in% names(original)) keep <- keep | (is.na(original$tag_id) & original$ring_number %in% rings)
+      expect_equal(selected$resources[[i]]$data, original[keep, , drop = FALSE],
         info = paste(name, master_release$resources[[i]]$name))
     }
     # The catalogue is release-wide; select source citations through selected tags.
